@@ -9,9 +9,8 @@ API para controle de estoque de farmácias, com pipeline CI/CD automatizada no G
 
 ## 🚀 Executar localmente
 
-```cmd
-
-cd %USERPROFILE%\Documents
+```bash
+cd ~/Documents
 git clone https://github.com/FernandoMathias/Engenharia-de-Software---Farmack.git
 cd Engenharia-de-Software---Farmack
 npm install
