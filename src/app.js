@@ -4,12 +4,12 @@ const app = express();
 
 app.use(express.static(path.join(__dirname, '../public')));
 
-// Página principal
+// Página de login
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/FarmackLogin.html'));
 });
 
-// Segunda página
+// Página principal
 app.get('/second', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/FarmackTelaPrincipal.html'));
 });
