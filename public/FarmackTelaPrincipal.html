@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Farmack — Tela Principal</title>
+  <style>
+    :root{
+      --bg:#f6f7fb; --card:#fff; --text:#1f2937; --muted:#6b7280; --border:#e5e7eb;
+      --primary:#2563eb; --primary-pressed:#1d4ed8; --ring:rgba(37,99,235,.25);
+      --danger:#dc2626; --warning:#d97706; --success:#16a34a; --shadow:0 10px 25px rgba(0,0,0,.08);
+      --radius:16px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,"Helvetica Neue",Arial;color:var(--text);background:var(--bg)}
+
+    .layout{display:grid; grid-template-columns: 260px 1fr; grid-template-rows: 64px 1fr; grid-template-areas:
+      "sidebar topbar" "sidebar main"; height:100vh}
+
+    /* barral lateral */
+    .sidebar{grid-area:sidebar; background:#ffffff; border-right:1px solid var(--border); padding:16px; display:flex; flex-direction:column; gap:16px}
+    .brand{display:flex; align-items:center; gap:10px}
+    .brand h1{font-size:22px; margin:0}
+    .nav{display:grid; gap:8px}
+    .nav button{display:flex; align-items:center; gap:10px; padding:10px 12px; border:1px solid var(--border); border-radius:12px; background:#fff; cursor:pointer; text-align:left; font-weight:600}
+    .nav button[aria-current="page"]{border-color:var(--primary); box-shadow:0 0 0 4px var(--ring)}
+    .nav button:hover{background:#f9fafb}
+    .sidebar .spacer{flex:1}
+    .logout{border:1px solid var(--border); background:#fff; border-radius:12px; padding:10px; cursor:pointer; font-weight:600}
+
+    /* barra de cima */
+    .topbar{grid-area:topbar; display:flex; align-items:center; gap:12px; padding:10px 16px; background:#ffffff; border-bottom:1px solid var(--border)}
+    .search{flex:1; position:relative}
+    .search input{width:100%; height:40px; padding:0 12px 0 36px; border:1px solid var(--border); border-radius:12px; outline:none}
+    .search input:focus{border-color:var(--primary); box-shadow:0 0 0 4px var(--ring)}
+    .search .icon{position:absolute; left:10px; top:50%; transform:translateY(-50%)}
+    .badge{padding:4px 10px; border-radius:999px; background:#eef2ff; color:#3730a3; font-weight:600; font-size:12px}
+
+    /* main */
+    .main{grid-area:main; padding:18px; overflow:auto}
+    .grid{display:grid; gap:16px}
+    .cols{grid-template-columns: repeat(12, 1fr)}
+
+    .card{background:var(--card); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); padding:16px}
+    .card h3{margin:0 0 8px; font-size:18px}
+
+    .kpis{display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:16px}
+    .kpi .value{font-size:28px; font-weight:800}
+    .kpi .hint{color:var(--muted); font-size:12px}
+
+    /* tabelas */
+    table{width:100%; border-collapse:collapse}
+    th,td{padding:10px 8px; border-bottom:1px solid var(--border); font-size:14px}
+    th{text-align:left; color:#374151}
+
+    /* botoes */
+    .btn{height:40px; border-radius:12px; border:0; cursor:pointer; font-weight:700; padding:0 14px; background:var(--primary); color:#fff}
+    .btn:hover{background:var(--primary-pressed)}
+    .btn.secondary{background:#fff; color:var(--text); border:1px solid var(--border)}
+
+    /* tags */
+    .tag{padding:3px 8px; border-radius:999px; font-size:12px; font-weight:700}
+    .tag.warn{background:#fef3c7; color:#92400e}
+    .tag.danger{background:#fee2e2; color:#991b1b}
+    .tag.ok{background:#dcfce7; color:#166534}
+
+    .section{display:none}
+    .section.active{display:block}
+
+    @media (max-width: 960px){
+      .layout{grid-template-columns: 1fr; grid-template-areas: "topbar" "main"}
+      .sidebar{display:none}
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <!-- barra lateral -->
+    <aside class="sidebar" aria-label="Navegação principal">
+      <div class="brand">
+        <div style="font-size:24px">💊</div>
+        <h1>Farmack</h1>
+      </div>
+      <div class="nav" id="nav">
+        <button data-section="dashboard" aria-current="page">📊 Dashboard</button>
+        <button data-section="produtos">📦 Produtos</button>
+        <button data-section="pdv">🧾 PDV</button>
+        <button data-section="alertas">⚠️ Alertas</button>
+        <button data-section="relatorios">📈 Relatórios</button>
+      </div>
+      <div class="spacer"></div>
+      <button class="logout" id="logoutBtn">Sair</button>
+    </aside>
+
+    <!-- barra de cima -->
+    <header class="topbar">
+      <div class="search">
+        <span class="icon">🔎</span>
+        <input id="globalSearch" placeholder="Pesquisar produtos, vendas, clientes…" />
+      </div>
+      <span id="roleBadge" class="badge" title="Perfil do usuário">Perfil: Farmacêutico</span>
+    </header>
+
+    <!-- main -->
+    <main class="main">
+      <!-- dashboard -->
+      <section id="dashboard" class="section active">
+        <div class="kpis">
+          <div class="card kpi"><h3>Vendas (hoje)</h3><div class="value" id="kpiVendas">R$ 0,00</div><div class="hint" id="kpiVendasHint">0 transações</div></div>
+          <div class="card kpi"><h3>Itens com baixa quantidade</h3><div class="value" id="kpiBaixa">0</div><div class="hint">Ponto de pedido atingido</div></div>
+          <div class="card kpi"><h3>Produtos a vencer (30 dias)</h3><div class="value" id="kpiVencer">0</div><div class="hint">Inclui lotes próximos do vencimento</div></div>
+          <div class="card kpi"><h3>Ticket médio (hoje)</h3><div class="value" id="kpiTicket">R$ 0,00</div><div class="hint">= valor total / nº de vendas</div></div>
+        </div>
+
+        <div class="grid" style="grid-template-columns: 1fr 1fr; gap:16px; margin-top:16px">
+          <div class="card">
+            <h3>Últimas vendas</h3>
+            <table id="tblUltimasVendas"><thead><tr><th>Hora</th><th>Itens</th><th>Total</th></tr></thead><tbody></tbody></table>
+          </div>
+          <div class="card">
+            <h3>Alertas recentes</h3>
+            <table id="tblAlertas"><thead><tr><th>Tipo</th><th>Produto</th><th>Status</th></tr></thead><tbody></tbody></table>
+          </div>
+        </div>
+      </section>
+
+      <!-- produtos -->
+      <section id="produtos" class="section">
+        <div class="card">
+          <div style="display:flex; gap:10px; align-items:center; justify-content:space-between">
+            <h3>Catálogo de Produtos</h3>
+            <div>
+              <input id="prodSearch" style="height:38px; border:1px solid var(--border); border-radius:10px; padding:0 10px" placeholder="Buscar por nome ou EAN" />
+              <button class="btn secondary" id="btnNovoProduto">+ Novo</button>
+            </div>
+          </div>
+          <table id="tblProdutos" style="margin-top:10px">
+            <thead><tr><th>EAN</th><th>Nome</th><th>Categoria</th><th>Preço</th><th>Estoque</th><th>Ações</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- pdv -->
+      <section id="pdv" class="section">
+        <div class="grid" style="grid-template-columns: 1fr 420px; gap:16px">
+          <div class="card">
+            <h3>Catálogo</h3>
+            <input id="pdvSearch" placeholder="Escaneie o EAN ou pesquise…" style="width:100%; height:40px; border:1px solid var(--border); border-radius:12px; padding:0 12px; margin-bottom:10px">
+            <table id="tblCatalogo"><thead><tr><th>EAN</th><th>Produto</th><th>Preço</th><th>Estoque</th><th></th></tr></thead><tbody></tbody></table>
+          </div>
+          <div class="card">
+            <h3>Carrinho</h3>
+            <table id="tblCarrinho"><thead><tr><th>Produto</th><th>Qtd</th><th>Subtotal</th><th></th></tr></thead><tbody></tbody></table>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px">
+              <strong>Total:</strong>
+              <div id="totalPdv">R$ 0,00</div>
+            </div>
+            <div style="display:flex; gap:8px; margin-top:12px">
+              <button class="btn" id="btnFinalizar">Finalizar (PIX)</button>
+              <button class="btn secondary" id="btnCancelar">Cancelar</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- alertas -->
+      <section id="alertas" class="section">
+        <div class="grid" style="grid-template-columns: 1fr 1fr; gap:16px">
+          <div class="card">
+            <h3>Estoque baixo</h3>
+            <table id="tblBaixo"><thead><tr><th>Produto</th><th>Estoque</th><th>Ponto Pedido</th><th>Status</th></tr></thead><tbody></tbody></table>
+          </div>
+          <div class="card">
+            <h3>Vencimento próximo (≤ 30 dias)</h3>
+            <table id="tblVencimento"><thead><tr><th>Produto</th><th>Lote</th><th>Validade</th><th>Status</th></tr></thead><tbody></tbody></table>
+          </div>
+        </div>
+      </section>
+
+      <!-- relatórios -->
+      <section id="relatorios" class="section">
+        <div class="card">
+          <h3>Vendas por dia (últimos 7 dias)</h3>
+          <canvas id="chart" height="220" aria-label="Gráfico de barras de vendas" role="img"></canvas>
+        </div>
+        <div class="card" style="margin-top:16px">
+          <h3>Movimentações recentes</h3>
+          <table id="tblMovs"><thead><tr><th>Data</th><th>Tipo</th><th>Produto</th><th>Qtd</th></tr></thead><tbody></tbody></table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    // =======================
+    // Mock de dados - trocar pela nossa API
+    // =======================
+    const today = new Date();
+    const money = v => v.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+    const fmtDate = d => new Date(d).toLocaleDateString('pt-BR');
+
+    const produtos = [
+      { id:1, ean:'7891234567890', nome:'Paracetamol 750mg 20cp', categoria:'Analgésico', preco: 12.9, estoque: 8, pontoPedido: 10, lotes:[{lote:'PCT-01', validade: addDays(today, 20)}] },
+      { id:2, ean:'7891111111111', nome:'Dipirona 1g 10cp', categoria:'Analgésico', preco: 10.5, estoque: 45, pontoPedido: 12, lotes:[{lote:'DIP-02', validade: addDays(today, 120)}] },
+      { id:3, ean:'7892222222222', nome:'Ibuprofeno 400mg 20cp', categoria:'Anti-inflamatório', preco: 21.9, estoque: 5, pontoPedido: 8, lotes:[{lote:'IBU-05', validade: addDays(today, 12)}] },
+      { id:4, ean:'7893333333333', nome:'Loratadina 10mg 12cp', categoria:'Antialérgico', preco: 15.99, estoque: 60, pontoPedido: 15, lotes:[{lote:'LOR-03', validade: addDays(today, 210)}] },
+      { id:5, ean:'7894444444444', nome:'Soro Fisiológico 0,9% 500ml', categoria:'Higiene', preco: 7.99, estoque: 2, pontoPedido: 6, lotes:[{lote:'SOR-07', validade: addDays(today, 5)}] },
+    ];
+
+    const vendas = [
+      // hoje
+      { data: setTime(new Date(), 9, 30), itens: [{id:1, q:1}, {id:2, q:2}], total: 33.9 },
+      { data: setTime(new Date(), 12, 5), itens: [{id:3, q:1}], total: 21.9 },
+      // ontem
+      { data: addDays(today, -1), itens: [{id:4, q:2}], total: 31.98 },
+      { data: addDays(today, -2), itens: [{id:2, q:3}], total: 31.5 },
+      { data: addDays(today, -3), itens: [{id:1, q:3}], total: 38.7 },
+      { data: addDays(today, -4), itens: [{id:5, q:1}], total: 7.99 },
+      { data: addDays(today, -5), itens: [{id:3, q:1}, {id:2, q:1}], total: 32.4 },
+    ];
+
+    const movimentacoes = [
+      { data: addDays(today,-1), tipo:'Entrada (compra)', prod:1, qtd: 30 },
+      { data: addDays(today,-1), tipo:'Saída (venda)', prod:3, qtd: 1 },
+      { data: addDays(today,-2), tipo:'Ajuste', prod:5, qtd: -2 },
+      { data: addDays(today,-3), tipo:'Devolução', prod:2, qtd: 1 },
+    ];
+
+    // =======================
+    // Navegação e estado
+    // =======================
+    const sections = [...document.querySelectorAll('.section')];
+    const nav = document.getElementById('nav');
+    nav.addEventListener('click', (e)=>{
+      if(e.target.matches('button[data-section]')){
+        const id = e.target.getAttribute('data-section');
+        sections.forEach(s => s.classList.toggle('active', s.id === id));
+        nav.querySelectorAll('button').forEach(b => b.removeAttribute('aria-current'));
+        e.target.setAttribute('aria-current','page');
+        if(id==='relatorios') drawChart();
+      }
+    });
+
+    document.getElementById('logoutBtn').addEventListener('click', ()=>{
+      alert('Sessão encerrada.');
+      window.location.href = '/login';
+    });
+
+    // simular papel do usuário
+    const role = (new URLSearchParams(location.search).get('role')) || 'Farmacêutico';
+    document.getElementById('roleBadge').textContent = `Perfil: ${role}`;
+
+    // =======================
+    // Dashboard
+    // =======================
+    function atualizarDashboard(){
+      const inicioHoje = new Date(); inicioHoje.setHours(0,0,0,0);
+      const fimHoje = new Date(); fimHoje.setHours(23,59,59,999);
+
+      const vendasHoje = vendas.filter(v => v.data >= inicioHoje && v.data <= fimHoje);
+      const totalHoje = vendasHoje.reduce((s,v)=> s+v.total, 0);
+      const ticket = vendasHoje.length ? totalHoje / vendasHoje.length : 0;
+
+      document.getElementById('kpiVendas').textContent = money(totalHoje);
+      document.getElementById('kpiVendasHint').textContent = `${vendasHoje.length} transações`;
+      document.getElementById('kpiTicket').textContent = money(ticket);
+
+      const baixa = produtos.filter(p => p.estoque <= p.pontoPedido).length;
+      document.getElementById('kpiBaixa').textContent = baixa;
+
+      const vencer = produtos.filter(p => p.lotes.some(l => diffDays(l.validade, today) <= 30)).length;
+      document.getElementById('kpiVencer').textContent = vencer;
+
+      // ultimas vendas
+      const tbody = document.querySelector('#tblUltimasVendas tbody');
+      tbody.innerHTML = vendas.sort((a,b)=> b.data-a.data).slice(0,5).map(v => {
+        return `<tr><td>${timeOrDate(v.data)}</td><td>${v.itens.reduce((s,i)=> s + i.q, 0)}</td><td>${money(v.total)}</td></tr>`;
+      }).join('');
+
+      // alertas
+      const tbodyA = document.querySelector('#tblAlertas tbody');
+      const alertas = [];
+      produtos.forEach(p=>{
+        if(p.estoque <= p.pontoPedido) alertas.push({tipo:'Estoque baixo', produto:p.nome, status: `<span class="tag warn">${p.estoque}/${p.pontoPedido}</span>`});
+        p.lotes.forEach(l=>{ const d = diffDays(l.validade, today); if(d<=30) alertas.push({tipo:'Validade', produto:p.nome, status:`<span class="tag danger">${d} dias</span>`}); });
+      });
+      tbodyA.innerHTML = alertas.slice(0,6).map(a=> `<tr><td>${a.tipo}</td><td>${a.produto}</td><td>${a.status}</td></tr>`).join('');
+    }
+
+    // =======================
+    // Produtos
+    // =======================
+    const tblProdutosBody = document.querySelector('#tblProdutos tbody');
+    function renderProdutos(list){
+      tblProdutosBody.innerHTML = list.map(p => `
+        <tr>
+          <td>${p.ean}</td>
+          <td>${p.nome}</td>
+          <td>${p.categoria}</td>
+          <td>${money(p.preco)}</td>
+          <td>${p.estoque}</td>
+          <td><button class="btn secondary" data-add="${p.id}">Adicionar ao PDV</button></td>
+        </tr>`
+      ).join('');
+    }
+    renderProdutos(produtos);
+
+    document.getElementById('prodSearch').addEventListener('input', (e)=>{
+      const q = e.target.value.toLowerCase();
+      const res = produtos.filter(p => p.nome.toLowerCase().includes(q) || p.ean.includes(q));
+      renderProdutos(res);
+    });
+
+    tblProdutosBody.addEventListener('click',(e)=>{
+      const id = e.target.getAttribute('data-add');
+      if(id){ addToCart(parseInt(id,10)); switchTo('pdv'); }
+    });
+
+    // =======================
+    // PDV
+    // =======================
+    const cart = new Map();
+
+    function renderCatalogo(list){
+      const tbody = document.querySelector('#tblCatalogo tbody');
+      tbody.innerHTML = list.map(p => `
+        <tr>
+          <td>${p.ean}</td>
+          <td>${p.nome}</td>
+          <td>${money(p.preco)}</td>
+          <td>${p.estoque}</td>
+          <td><button class="btn" data-buy="${p.id}">Adicionar</button></td>
+        </tr>`).join('');
+    }
+    renderCatalogo(produtos);
+
+    document.getElementById('pdvSearch').addEventListener('input', (e)=>{
+      const q = e.target.value.toLowerCase();
+      const res = produtos.filter(p => p.nome.toLowerCase().includes(q) || p.ean.includes(q));
+      renderCatalogo(res);
+    });
+
+    document.querySelector('#tblCatalogo tbody').addEventListener('click',(e)=>{
+      const id = e.target.getAttribute('data-buy');
+      if(id) addToCart(parseInt(id,10));
+    });
+
+    function addToCart(id){
+      const p = produtos.find(x=>x.id===id);
+      if(!p) return;
+      const current = cart.get(id) || { prod:p, q:0 };
+      if(p.estoque - (current.q+1) < 0){ alert('Estoque insuficiente.'); return; }
+      current.q += 1; cart.set(id, current); renderCart();
+    }
+
+    function renderCart(){
+      const tbody = document.querySelector('#tblCarrinho tbody');
+      let total = 0;
+      tbody.innerHTML = [...cart.values()].map(({prod,q})=>{
+        const sub = prod.preco * q; total += sub;
+        return `<tr>
+          <td>${prod.nome}</td>
+          <td>
+            <button class="btn secondary" data-dec="${prod.id}">−</button>
+            <span style="margin:0 8px">${q}</span>
+            <button class="btn secondary" data-inc="${prod.id}">+</button>
+          </td>
+          <td>${money(sub)}</td>
+          <td><button class="btn secondary" data-rem="${prod.id}">Remover</button></td>
+        </tr>`;
+      }).join('');
+      document.getElementById('totalPdv').textContent = money(total);
+    }
+
+    document.querySelector('#tblCarrinho tbody').addEventListener('click',(e)=>{
+      const id = parseInt(e.target.getAttribute('data-inc') || e.target.getAttribute('data-dec') || e.target.getAttribute('data-rem') || '0', 10);
+      if(!id) return;
+      const entry = cart.get(id); if(!entry) return;
+      if(e.target.hasAttribute('data-inc')){ if(entry.prod.estoque > entry.q) entry.q++; }
+      if(e.target.hasAttribute('data-dec')){ entry.q = Math.max(1, entry.q-1); }
+      if(e.target.hasAttribute('data-rem')){ cart.delete(id); }
+      renderCart();
+    });
+
+    document.getElementById('btnCancelar').addEventListener('click', ()=>{ cart.clear(); renderCart(); });
+
+    document.getElementById('btnFinalizar').addEventListener('click', ()=>{
+      if(cart.size===0){ alert('Carrinho vazio.'); return; }
+      // simula baixa de estoque e registro de venda
+      let total=0; const itens=[];
+      cart.forEach(({prod,q})=>{ prod.estoque -= q; total += prod.preco*q; itens.push({id:prod.id, q}); });
+      vendas.push({ data:new Date(), itens, total });
+      movimentacoes.push(...itens.map(i=> ({ data:new Date(), tipo:'Saída (venda)', prod:i.id, qtd: i.q })));
+      cart.clear(); renderCart(); renderCatalogo(produtos); renderProdutos(produtos); atualizarDashboard(); preencherAlertas(); drawChart();
+      alert('Venda registrada com sucesso (PIX).');
+    });
+
+    // =======================
+    // Alertas
+    // =======================
+    function preencherAlertas(){
+      const tbodyB = document.querySelector('#tblBaixo tbody');
+      const low = produtos.filter(p => p.estoque <= p.pontoPedido);
+      tbodyB.innerHTML = low.map(p=> `<tr><td>${p.nome}</td><td>${p.estoque}</td><td>${p.pontoPedido}</td><td><span class="tag warn">Repor</span></td></tr>`).join('');
+
+      const tbodyV = document.querySelector('#tblVencimento tbody');
+      const near = [];
+      produtos.forEach(p=> p.lotes.forEach(l=>{
+        const d = diffDays(l.validade, today);
+        if(d<=30) near.push({nome:p.nome, lote:l.lote, validade:l.validade, dias:d});
+      }));
+      tbodyV.innerHTML = near.map(n=> `<tr><td>${n.nome}</td><td>${n.lote}</td><td>${fmtDate(n.validade)}</td><td><span class="tag danger">${n.dias} dias</span></td></tr>`).join('');
+    }
+
+    // =======================
+    // Relatorios
+    // =======================
+    function drawChart(){
+      const canvas = document.getElementById('chart');
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+
+      const days = [...Array(7)].map((_,i)=> addDays(today, -(6-i)));
+      const totals = days.map(d=>{
+        const start = new Date(d); start.setHours(0,0,0,0);
+        const end = new Date(d); end.setHours(23,59,59,999);
+        return vendas.filter(v=> v.data>=start && v.data<=end).reduce((s,v)=> s+v.total, 0);
+      });
+
+      const padding = 28; const W = canvas.width = canvas.clientWidth; const H = canvas.height = 220;
+      const max = Math.max(...totals, 50); // evita zero
+      const barW = (W - padding*2) / totals.length * .7;
+      const step = (W - padding*2) / totals.length;
+
+      ctx.font = '12px Inter, sans-serif';
+      ctx.fillStyle = '#6b7280';
+      ctx.textAlign = 'left';
+      ctx.fillText('Valores (R$)', 8, 14);
+
+      totals.forEach((val, i)=>{
+        const x = padding + i*step + (step - barW)/2;
+        const h = (val / max) * (H - padding*2);
+        const y = H - padding - h;
+        // barras
+        ctx.fillStyle = '#2563eb';
+        ctx.fillRect(x, y, barW, h);
+        // rotulo
+        ctx.fillStyle = '#111827';
+        ctx.textAlign = 'center';
+        ctx.fillText(money(val), x + barW/2, y - 4);
+        ctx.fillStyle = '#6b7280';
+        ctx.fillText(days[i].toLocaleDateString('pt-BR',{weekday:'short'}), x + barW/2, H - padding + 14);
+      });
+
+      // eixo
+      ctx.strokeStyle = '#e5e7eb';
+      ctx.beginPath();
+      ctx.moveTo(padding, H - padding);
+      ctx.lineTo(W - padding, H - padding);
+      ctx.stroke();
+    }
+
+    // =======================
+    // Busca global (filtra produtos no contexto)
+    // =======================
+    document.getElementById('globalSearch').addEventListener('input', (e)=>{
+      const q = e.target.value.toLowerCase();
+      const filtered = produtos.filter(p => [p.nome,p.ean,p.categoria].some(x => x.toLowerCase().includes(q)));
+      renderProdutos(filtered);
+      renderCatalogo(filtered);
+    });
+
+    // helpers
+    function timeOrDate(dt){
+      const d = new Date(dt);
+      const isToday = (new Date().toDateString() === d.toDateString());
+      return isToday ? d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}) : fmtDate(d);
+    }
+    function addDays(d, n){ const x = new Date(d); x.setDate(x.getDate()+n); return x; }
+    function diffDays(a,b){ const x = new Date(a); x.setHours(0,0,0,0); const y = new Date(b); y.setHours(0,0,0,0); return Math.round((x-y)/(1000*60*60*24)); }
+    function setTime(d, h, m){ const x = new Date(d); x.setHours(h,m,0,0); return x; }
+
+    function switchTo(id){
+      sections.forEach(s => s.classList.toggle('active', s.id === id));
+      nav.querySelectorAll('button').forEach(b => b.setAttribute('aria-current', b.getAttribute('data-section')===id ? 'page' : 'false'));
+    }
+
+    // inicializa
+    atualizarDashboard();
+    preencherAlertas();
+    drawChart();
+  </script>
+</body>
+</html>

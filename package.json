@@ -1,0 +1,15 @@
+{
+  "name": "pharmacy-stock-control",
+  "version": "1.0.0",
+  "description": "API para controle de estoque de farmácias",
+  "main": "src/app.js",
+  "scripts": {
+    "start": "node src/app.js",
+    "build": "echo 'Build step placeholder (use TypeScript or bundler if needed)'",
+    "test": "echo 'No tests yet' && exit 0"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "dotenv": "^16.3.1"
+  }
+}
