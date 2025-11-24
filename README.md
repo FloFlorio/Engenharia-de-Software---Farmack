@@ -1,0 +1,23 @@
+# Pharmacy Stock Control
+
+API para controle de estoque de farmácias, com pipeline CI/CD automatizada no GitHub Actions e deploy via AWS ECS.
+
+## 🧰 Tecnologias
+- Node.js + Express
+- GitHub Actions (CI/CD)
+- Docker + AWS ECR + ECS
+
+## 🚀 Executar localmente
+
+```bash
+cd ~/Documents
+git clone https://github.com/FernandoMathias/Engenharia-de-Software---Farmack.git
+cd Engenharia-de-Software---Farmack
+npm install
+npm start
+
+abra no navegador para acessar a tela de login
+http://localhost:3000/
+
+abra no navegador para acessar a tela principal
+http://localhost:3000/second
