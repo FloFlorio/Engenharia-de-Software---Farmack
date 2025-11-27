@@ -13,10 +13,10 @@ async function list(req, res){
 
 async function create(req, res){
   try {
-    const { produto_id, quantidade, tipo } = req.body;
-    if (!produto_id || !Number.isInteger(quantidade)) return res.status(400).json({ error: 'produto_id e quantidade são obrigatórios' });
+    const { produto_id, estoque, tipo } = req.body;
+    if (!produto_id || !Number.isInteger(estoque)) return res.status(400).json({ error: 'produto_id e estoque são obrigatórios' });
 
-    const [result] = await pool.query('INSERT INTO movimentacoes (data,tipo,produto_id,quantidade) VALUES (?, ?, ?, ?)', [new Date(), tipo || 'Entrada', produto_id, quantidade]);
+    const [result] = await pool.query('INSERT INTO movimentacoes (data,tipo,produto_id,estoque) VALUES (?, ?, ?, ?)', [new Date(), tipo || 'Entrada', produto_id, estoque]);
     res.status(201).json({ id: result.insertId });
   } catch (err) {
     console.error(err);

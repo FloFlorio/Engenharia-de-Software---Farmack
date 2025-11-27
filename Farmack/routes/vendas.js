@@ -27,7 +27,7 @@
  *                   properties:
  *                     id:
  *                       type: integer
- *                     quantidade:
+ *                     estoque:
  *                       type: integer
  *                     preco:
  *                       type: number

@@ -75,7 +75,7 @@
  *                 type: string
  *               preco:
  *                 type: number
- *               quantidade:
+ *               estoque:
  *                 type: integer
  *               lote:
  *                 type: string

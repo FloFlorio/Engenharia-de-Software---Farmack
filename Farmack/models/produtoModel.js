@@ -18,10 +18,11 @@ async function search(q){
 }
 
 async function create(prod){
-  const { ean = null, nome, categoria = null, preco = 0, estoque = 0, pontoPedido = 0, lote = null, validade = null } = prod;
+  const { ean = null, nome, categoria = null, preco = 0, pontoPedido = 0, lote = null, validade = null, estoque } = prod;
+  const estoqueFinal = prod.estoque !== undefined ? prod.estoque : (estoque !== undefined ? estoque : 0);
   const [result] = await pool.query(
     'INSERT INTO produtos (ean,nome,categoria,preco,estoque,pontoPedido,lote,validade) VALUES (?,?,?,?,?,?,?,?)',
-    [ean,nome,categoria,preco,estoque,pontoPedido,lote,validade]
+    [ean,nome,categoria,preco,estoqueFinal,pontoPedido,lote,validade]
   );
   const created = await getById(result.insertId);
   return created;

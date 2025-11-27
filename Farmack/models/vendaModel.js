@@ -22,13 +22,13 @@ async function createVenda(venda) {
       const precoUnit = item.preco !== undefined ? item.preco : produtoAtual.preco;
 
       await conn.query(
-        'INSERT INTO venda_itens (venda_id, produto_id, quantidade, preco_unitario) VALUES (?,?,?,?)',
+        'INSERT INTO venda_itens (venda_id, produto_id, estoque, preco_unitario) VALUES (?,?,?,?)',
         [vendaId, item.id, item.q, precoUnit]
       );
 
       await conn.query('UPDATE produtos SET estoque = estoque - ? WHERE id = ?', [item.q, item.id]);
 
-      await conn.query('INSERT INTO movimentacoes (data, tipo, produto_id, quantidade) VALUES (?, ?, ?, ?)', [new Date(), 'Saída (venda)', item.id, item.q]);
+      await conn.query('INSERT INTO movimentacoes (data, tipo, produto_id, estoque) VALUES (?, ?, ?, ?)', [new Date(), 'Saída (venda)', item.id, item.q]);
     }
 
     await conn.commit();

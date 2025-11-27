@@ -5,6 +5,36 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Farmack — Tela Principal</title>
   <style>
+
+    /* Adicionar na seção <style> */
+      .input-label {
+        font-weight: 600;
+        margin-top: 8px;
+        margin-bottom: 4px;
+        display: block;
+        font-size: 14px;
+      }
+
+      .input-field {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        outline: none;
+        transition: border-color 0.2s;
+      }
+
+      .input-field:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px var(--ring);
+      }
+
+      /* Ajuste no modal-content para melhor espaçamento */
+      .modal-content {
+        /* ... (manter estilos existentes) ... */
+        gap: 0px; /* Alterar o gap para 0, pois os inputs já têm margin-top */
+      }
+
     /* Modal styles kept first so the modal renders correctly */
     .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: flex; justify-content: center; align-items: center; }
     .modal.hidden { display: none; }
@@ -78,6 +108,7 @@
       .layout{grid-template-columns: 1fr; grid-template-areas: "topbar" "main"}
       .sidebar{display:none}
     }
+
   </style>
 </head>
 <body>
@@ -114,7 +145,7 @@
       <section id="dashboard" class="section active">
         <div class="kpis">
           <div class="card kpi"><h3>Vendas (hoje)</h3><div class="value" id="kpiVendas">R$ 0,00</div><div class="hint" id="kpiVendasHint">0 transações</div></div>
-          <div class="card kpi"><h3>Itens com baixa quantidade</h3><div class="value" id="kpiBaixa">0</div><div class="hint">Ponto de pedido atingido</div></div>
+          <div class="card kpi"><h3>Itens com baixa estoque</h3><div class="value" id="kpiBaixa">0</div><div class="hint">Ponto de pedido atingido</div></div>
           <div class="card kpi"><h3>Produtos a vencer (30 dias)</h3><div class="value" id="kpiVencer">0</div><div class="hint">Inclui lotes próximos do vencimento</div></div>
           <div class="card kpi"><h3>Ticket médio (hoje)</h3><div class="value" id="kpiTicket">R$ 0,00</div><div class="hint">= valor total / nº de vendas</div></div>
         </div>
@@ -200,34 +231,43 @@
   </div>
 
   <!-- MODAL NOVO PRODUTO -->
-  <div id="modalNovoProduto" class="modal hidden" aria-hidden="true">
-    <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-      <h2 id="modalTitle">Novo Produto</h2>
+<div id="modalNovoProduto" class="modal hidden" aria-hidden="true">
+  <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <h2 id="modalTitle">Novo Produto</h2>
 
-      <label>Nome</label>
-      <input id="npNome" type="text" />
+    <!-- NOVO: Campo EAN -->
+    <label for="npEan" class="input-label">EAN (Código de Barras)</label>
+    <input id="npEan" type="text" class="input-field" />
 
-      <label>Descrição</label>
-      <input id="npDescricao" type="text" />
+    <label for="npNome" class="input-label">Nome</label>
+    <input id="npNome" type="text" class="input-field" />
 
-      <label>Preço</label>
-      <input id="npPreco" type="number" step="0.01" />
+    <!-- NOVO: Campo Categoria -->
+    <label for="npCategoria" class="input-label">Categoria</label>
+    <input id="npCategoria" type="text" class="input-field" />
 
-      <label>Quantidade</label>
-      <input id="npQuantidade" type="number" />
+    <label for="npDescricao" class="input-label">Descrição</label>
+    <input id="npDescricao" type="text" class="input-field" />
 
-      <label>Lote</label>
-      <input id="npLote" type="text" />
+    <label for="npPreco" class="input-label">Preço</label>
+    <input id="npPreco" type="number" step="0.01" class="input-field" />
 
-      <label>Validade</label>
-      <input id="npValidade" type="date" />
+    <label for="npEstoque" class="input-label">Estoque</label>
+    <input id="npEstoque" type="number" class="input-field" />
 
-      <div class="modal-actions">
-        <button class="btn" id="btnSalvarProduto">Salvar</button>
-        <button class="btn secondary" id="btnFecharModal">Cancelar</button>
-      </div>
+    <label for="npLote" class="input-label">Lote</label>
+    <input id="npLote" type="text" class="input-field" />
+
+    <label for="npValidade" class="input-label">Validade</label>
+    <input id="npValidade" type="date" class="input-field" />
+
+    <div class="modal-actions">
+      <button class="btn secondary" id="btnFecharModal">Cancelar</button>
+      <button class="btn" id="btnSalvarProduto">Criar Produto</button>
     </div>
   </div>
+</div>
+
 
   <script>
     // === CONFIG ===
@@ -250,6 +290,7 @@
     let vendas = [];
     let movimentacoes = [];
     const cart = new Map();
+    let produtoEmEdicaoId = null;
 
     // DOM refs
     const sections = [...document.querySelectorAll('.section')];
@@ -323,6 +364,29 @@
       }
     }
 
+    async function deleteProduto(id) {
+      if (!confirm('Tem certeza que deseja excluir este produto?')) return;
+      try {
+        const resp = await fetch(`${API}/api/produtos/${id}`, {
+          method: 'DELETE',
+        });
+        
+        if (resp.status === 204) { // 204 No Content é o esperado para DELETE bem-sucedido
+          alert('Produto excluído com sucesso!');
+          await fetchProdutos(); // Recarrega a lista de produtos
+        } else if (resp.status === 404) {
+          alert('Erro: Produto não encontrado.');
+        } else {
+          // Tenta ler a mensagem de erro do backend, se houver
+          const json = await resp.json().catch(() => ({}));
+          throw new Error(json.error || 'Erro ao excluir produto');
+        }
+      } catch (err) {
+        console.error(err);
+        alert('Erro ao excluir produto: ' + (err.message || 'Erro desconhecido'));
+      }
+    }
+
     // ============= RENDERERS =============
     const tblProdutosBody = document.querySelector('#tblProdutos tbody');
     function renderProdutos(list){
@@ -332,8 +396,14 @@
           <td>${p.nome || ''}</td>
           <td>${p.categoria || ''}</td>
           <td>${money(p.preco)}</td>
-          <td>${p.estoque ?? p.quantidade ?? 0}</td>
-          <td><button class="btn secondary" data-add="${p.id}">Adicionar ao PDV</button></td>
+          <td>${p.estoque ?? p.estoque ?? 0}</td>
+          <td>
+          <div style="display:flex; gap:8px;">
+          <button class="btn secondary" data-add="${p.id}">PDV</button>
+          <button class="btn secondary" data-edit="${p.id}">Editar</button>
+          <button class="btn secondary" data-delete="${p.id}" style="background:#fef2f2; color:#b91c1c;">Excluir</button>
+          </div>
+        </td>
         </tr>`).join('');
     }
 
@@ -344,7 +414,7 @@
           <td>${p.ean || ''}</td>
           <td>${p.nome || ''}</td>
           <td>${money(p.preco)}</td>
-          <td>${p.estoque ?? p.quantidade ?? 0}</td>
+          <td>${p.estoque ?? p.estoque ?? 0}</td>
           <td><button class="btn" data-buy="${p.id}">Adicionar</button></td>
         </tr>`).join('');
     }
@@ -372,18 +442,18 @@
       const tbody = document.querySelector('#tblUltimasVendas tbody');
       const items = (vendas || []).slice().sort((a,b)=> b.data - a.data).slice(0,5);
       tbody.innerHTML = items.map(v => {
-        const count = (v.itens || []).reduce((s,i)=> s + (i.q || i.quantidade || 0), 0);
+        const count = (v.itens || []).reduce((s,i)=> s + (i.q || i.estoque || 0), 0);
         return `<tr><td>${timeOrDate(v.data)}</td><td>${count}</td><td>${money(v.total)}</td></tr>`;
       }).join('');
     }
 
     function preencherAlertas(){
       const tbodyB = document.querySelector('#tblBaixo tbody');
-      const low = produtos.filter(p => (p.estoque ?? p.quantidade ?? 0) <= (p.pontoPedido ?? 0));
+      const low = produtos.filter(p => (p.estoque ?? p.estoque ?? 0) <= (p.pontoPedido ?? 0));
       tbodyB.innerHTML = low.map(p=> `
         <tr>
           <td>${p.nome}</td>
-          <td>${p.estoque ?? p.quantidade ?? 0}</td>
+          <td>${p.estoque ?? p.estoque ?? 0}</td>
           <td>${p.pontoPedido ?? '-'}</td>
           <td><span class="tag warn">Repor</span></td>
         </tr>`).join('');
@@ -414,7 +484,7 @@
           <td>${fmtDate(m.data)}</td>
           <td>${m.tipo || '-'}</td>
           <td>${m.produto_nome || m.prod || m.produto_id || '-'}</td>
-          <td>${m.quantidade ?? m.qtd ?? m.q ?? '-'}</td>
+          <td>${m.estoque ?? m.qtd ?? m.q ?? '-'}</td>
         </tr>`).join('');
     }
 
@@ -433,12 +503,28 @@
     });
 
     // delegations
-    tblProdutosBody.addEventListener('click',(e)=>{
-      const btn = e.target.closest('[data-add]');
-      if(!btn) return;
-      const id = parseInt(btn.getAttribute('data-add'),10);
-      if(id){ addToCart(id); switchTo('pdv'); }
-    });
+    // delegations
+tblProdutosBody.addEventListener('click',(e)=>{
+  const addBtn = e.target.closest('[data-add]');
+  const deleteBtn = e.target.closest('[data-delete]');
+  const editBtn = e.target.closest('[data-edit]'); // NOVO: Botão de Edição
+
+  if(addBtn){
+    const id = parseInt(addBtn.getAttribute('data-add'),10);
+    if(id){ addToCart(id); switchTo('pdv'); }
+  }
+
+  if(deleteBtn){
+    const id = parseInt(deleteBtn.getAttribute('data-delete'),10);
+    if(id){ deleteProduto(id); }
+  }
+  
+  if(editBtn){ // Lógica de Edição
+    const id = parseInt(editBtn.getAttribute('data-edit'),10);
+    if(id){ openModal(id); } // Chama a nova função openModal com o ID
+  }
+});
+
 
     document.querySelector('#tblCatalogo tbody').addEventListener('click',(e)=>{
       const btn = e.target.closest('[data-buy]');
@@ -488,7 +574,7 @@
       const p = produtos.find(x=> Number(x.id) === Number(id));
       if(!p) { alert('Produto não encontrado'); return; }
       const current = cart.get(id) || { prod: p, q: 0 };
-      if((p.estoque ?? p.quantidade ?? 0) - (current.q + 1) < 0){ alert('Estoque insuficiente.'); return; }
+      if((p.estoque ?? p.estoque ?? 0) - (current.q + 1) < 0){ alert('Estoque insuficiente.'); return; }
       current.q += 1;
       cart.set(id, current);
       renderCart();
@@ -509,7 +595,7 @@
       document.getElementById('kpiVendasHint').textContent = `${vendasHoje.length} transações`;
       document.getElementById('kpiTicket').textContent = money(ticket);
 
-      const baixa = produtos.filter(p => (p.estoque ?? p.quantidade ?? 0) <= (p.pontoPedido ?? 0)).length;
+      const baixa = produtos.filter(p => (p.estoque ?? p.estoque ?? 0) <= (p.pontoPedido ?? 0)).length;
       document.getElementById('kpiBaixa').textContent = baixa;
 
       const vencer = produtos.filter(p => (p.lotes || []).some(l => diffDays(l.validade, today) <= 30)).length;
@@ -566,64 +652,108 @@
     }
 
     // === MODAL LOGIC ===
-    const modalNovo = document.getElementById('modalNovoProduto');
-    const btnNovo = document.getElementById('btnNovoProduto');
-    const btnFechar = document.getElementById('btnFecharModal');
-    const btnSalvar = document.getElementById('btnSalvarProduto');
+    // === MODAL LOGIC (UNIFICADO) ===
+const modalNovo = document.getElementById('modalNovoProduto');
+const btnNovo = document.getElementById('btnNovoProduto');
+const btnFechar = document.getElementById('btnFecharModal');
+const btnSalvar = document.getElementById('btnSalvarProduto');
+const modalTitle = document.getElementById('modalTitle');
 
-    btnNovo.addEventListener('click', () => {
-      // clear modal fields
-      document.getElementById('npNome').value = '';
-      document.getElementById('npDescricao').value = '';
-      document.getElementById('npPreco').value = '';
-      document.getElementById('npQuantidade').value = '';
-      document.getElementById('npLote').value = '';
-      document.getElementById('npValidade').value = '';
-      modalNovo.classList.remove('hidden');
-      modalNovo.setAttribute('aria-hidden','false');
+function openModal(id = null) {
+  produtoEmEdicaoId = id;
+  modalTitle.textContent = id ? 'Editar Produto' : 'Novo Produto';
+  btnSalvar.textContent = id ? 'Salvar Alterações' : 'Criar Produto';
+  
+  // Limpa os campos antes de abrir
+  document.getElementById('npEan').value = '';
+  document.getElementById('npNome').value = '';
+  document.getElementById('npCategoria').value = '';
+  document.getElementById('npDescricao').value = '';
+  document.getElementById('npPreco').value = '';
+  document.getElementById('npEstoque').value = '';
+  document.getElementById('npLote').value = '';
+  document.getElementById('npValidade').value = '';
+
+  if (id) {
+    const produto = produtos.find(p => p.id === id);
+    if (produto) {
+      // Preenche os campos para edição
+      document.getElementById('npEan').value = produto.ean || '';
+      document.getElementById('npNome').value = produto.nome || '';
+      document.getElementById('npCategoria').value = produto.categoria || '';
+      document.getElementById('npDescricao').value = produto.descricao || '';
+      document.getElementById('npPreco').value = produto.preco || 0;
+      document.getElementById('npEstoque').value = produto.estoque || produto.estoque || 0;
+      document.getElementById('npLote').value = produto.lote || '';
+      document.getElementById('npValidade').value = produto.validade ? new Date(produto.validade).toISOString().split('T')[0] : '';
+    }
+  }
+
+  modalNovo.classList.remove('hidden');
+  modalNovo.setAttribute('aria-hidden', 'false');
+}
+
+function closeModal() {
+  modalNovo.classList.add('hidden');
+  modalNovo.setAttribute('aria-hidden', 'true');
+  produtoEmEdicaoId = null;
+}
+
+async function saveProduto() {
+  const ean = document.getElementById('npEan').value.trim();
+  const nome = document.getElementById('npNome').value.trim();
+  const categoria = document.getElementById('npCategoria').value.trim();
+  const descricao = document.getElementById('npDescricao').value.trim();
+  const preco = parseFloat(document.getElementById('npPreco').value);
+  const estoque = parseInt(document.getElementById('npEstoque').value, 10);
+  const lote = document.getElementById('npLote').value.trim();
+  const validade = document.getElementById('npValidade').value;
+
+  if (!nome || Number.isNaN(preco) || Number.isNaN(estoque)) {
+    alert('Nome, Preço e Estoque são obrigatórios.');
+    return;
+  }
+
+  const data = {
+    ean,
+    nome,
+    categoria,
+    descricao,
+    preco,
+    estoque: estoque, // Usamos 'estoque' para corresponder ao seu modelo
+    lote,
+    validade: validade || null
+  };
+
+  const method = produtoEmEdicaoId ? 'PUT' : 'POST';
+  const url = produtoEmEdicaoId ? `${API}/api/produtos/${produtoEmEdicaoId}` : `${API}/api/produtos`;
+
+  try {
+    const resp = await fetch(url, {
+      method: method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
     });
 
-    btnFechar.addEventListener('click', () => {
-      modalNovo.classList.add('hidden');
-      modalNovo.setAttribute('aria-hidden','true');
-    });
+    if (!resp.ok) {
+      const json = await resp.json().catch(() => ({}));
+      throw new Error(json.error || `Erro ao ${produtoEmEdicaoId ? 'atualizar' : 'criar'} produto`);
+    }
 
-    btnSalvar.addEventListener('click', async () => {
-      const produto = {
-        nome: document.getElementById('npNome').value.trim(),
-        descricao: document.getElementById('npDescricao').value.trim(),
-        preco: parseFloat(document.getElementById('npPreco').value),
-        quantidade: parseInt(document.getElementById('npQuantidade').value, 10),
-        lote: document.getElementById('npLote').value.trim(),
-        validade: document.getElementById('npValidade').value
-      };
+    alert(`Produto ${produtoEmEdicaoId ? 'atualizado' : 'criado'} com sucesso!`);
+    closeModal();
+    await fetchProdutos(); // Recarrega a lista
+  } catch (err) {
+    console.error('Erro ao salvar produto', err);
+    alert(`Erro ao ${produtoEmEdicaoId ? 'atualizar' : 'criar'} produto: ` + (err.message || 'Erro desconhecido'));
+  }
+}
 
-      if(!produto.nome || Number.isNaN(produto.preco) || Number.isNaN(produto.quantidade)) {
-        alert('Nome, preço e quantidade são obrigatórios.');
-        return;
-      }
+// Event Listeners
+btnNovo.addEventListener('click', () => openModal());
+btnFechar.addEventListener('click', closeModal);
+btnSalvar.addEventListener('click', saveProduto);
 
-      try {
-        const res = await fetch(`${API}/api/produtos`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(produto)
-        });
-        if(!res.ok){
-          const errJson = await res.json().catch(()=>null);
-          console.error('Resposta do servidor:', res.status, errJson);
-          throw new Error(errJson?.error || `HTTP ${res.status}`);
-        }
-        // sucesso
-        modalNovo.classList.add('hidden');
-        modalNovo.setAttribute('aria-hidden','true');
-        await fetchProdutos();
-        alert('Produto criado com sucesso!');
-      } catch (err) {
-        console.error('Erro ao salvar produto', err);
-        alert('Erro ao criar produto: ' + (err.message || 'Erro'));
-      }
-    });
 
     // helper: switchTo section programmatically
     function switchTo(id){

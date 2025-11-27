@@ -36,8 +36,8 @@ async function search(req, res){
 async function create(req,res){
   try{
     const body = req.body;
-    if(!body || !body.nome || body.preco === undefined || body.quantidade === undefined){
-      return res.status(400).json({ error: 'nome, preco e quantidade são obrigatórios' });
+    if(!body || !body.nome || body.preco === undefined || body.estoque === undefined){
+      return res.status(400).json({ error: 'nome, preco e estoque são obrigatórios' });
     }
     const created = await produtoModel.create(body);
     res.status(201).json(created);
