@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Farmack — Tela Principal</title>
+  <style>
+    #chart {
+      width: 100%;
+    }
+
+    .input-label {
+      font-weight: 600;
+      margin-top: 8px;
+      margin-bottom: 4px;
+      display: block;
+      font-size: 14px;
+    }
+
+    .input-field {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .input-field:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px var(--ring);
+    }
+
+    /* Ajuste no modal-content para melhor espaçamento */
+    .modal-content {
+      /* ... (manter estilos existentes) ... */
+      gap: 0px; /* Alterar o gap para 0, pois os inputs já têm margin-top */
+    }
+
+    /* Modal styles kept first so the modal renders correctly */
+    .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: flex; justify-content: center; align-items: center; }
+    .modal.hidden { display: none; }
+    .modal-content { background: white; padding: 20px; width: 420px; border-radius: 12px; display: flex; flex-direction: column; gap: 10px; }
+    .modal-actions { margin-top: 15px; display: flex; justify-content: space-between; }
+
+    :root{
+      --bg:#f6f7fb; --card:#fff; --text:#1f2937; --muted:#6b7280; --border:#e5e7eb;
+      --primary:#2563eb; --primary-pressed:#1d4ed8; --ring:rgba(37,99,235,.25);
+      --danger:#dc2626; --warning:#d97706; --success:#16a34a; --shadow:0 10px 25px rgba(0,0,0,.08);
+      --radius:16px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,"Helvetica Neue",Arial;color:var(--text);background:var(--bg)}
+
+    .layout{display:grid; grid-template-columns: 260px 1fr; grid-template-rows: 64px 1fr; grid-template-areas:
+      "sidebar topbar" "sidebar main"; height:100vh}
+
+    /* barra lateral */
+    .sidebar{grid-area:sidebar; background:#ffffff; border-right:1px solid var(--border); padding:16px; display:flex; flex-direction:column; gap:16px}
+    .brand{display:flex; align-items:center; gap:10px}
+    .brand h1{font-size:22px; margin:0}
+    .nav{display:grid; gap:8px}
+    .nav button{display:flex; align-items:center; gap:10px; padding:10px 12px; border:1px solid var(--border); border-radius:12px; background:#fff; cursor:pointer; text-align:left; font-weight:600}
+    .nav button[aria-current="page"]{border-color:var(--primary); box-shadow:0 0 0 4px var(--ring)}
+    .nav button:hover{background:#f9fafb}
+    .sidebar .spacer{flex:1}
+    .logout{border:1px solid var(--border); background:#fff; border-radius:12px; padding:10px; cursor:pointer; font-weight:600}
+
+    /* barra de cima */
+    .topbar{grid-area:topbar; display:flex; align-items:center; gap:12px; padding:10px 16px; background:#ffffff; border-bottom:1px solid var(--border)}
+    .search{flex:1; position:relative}
+    .search input{width:100%; height:40px; padding:0 12px 0 36px; border:1px solid var(--border); border-radius:12px; outline:none}
+    .search input:focus{border-color:var(--primary); box-shadow:0 0 0 4px var(--ring)}
+    .search .icon{position:absolute; left:10px; top:50%; transform:translateY(-50%)}
+    .badge{padding:4px 10px; border-radius:999px; background:#eef2ff; color:#3730a3; font-weight:600; font-size:12px}
+
+    /* main */
+    .main{grid-area:main; padding:18px; overflow:auto}
+    .grid{display:grid; gap:16px}
+    .cols{grid-template-columns: repeat(12, 1fr)}
+
+    .card{background:var(--card); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); padding:16px}
+    .card h3{margin:0 0 8px; font-size:18px}
+
+    .kpis{display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:16px}
+    .kpi .value{font-size:28px; font-weight:800}
+    .kpi .hint{color:var(--muted); font-size:12px}
+
+    /* tabelas */
+    table{width:100%; border-collapse:collapse}
+    th,td{padding:10px 8px; border-bottom:1px solid var(--border); font-size:14px}
+    th{text-align:left; color:#374151}
+
+    /* botoes */
+    .btn{height:40px; border-radius:12px; border:0; cursor:pointer; font-weight:700; padding:0 14px; background:var(--primary); color:#fff}
+    .btn:hover{background:var(--primary-pressed)}
+    .btn.secondary{background:#fff; color:var(--text); border:1px solid var(--border)}
+
+    /* tags */
+    .tag{padding:3px 8px; border-radius:999px; font-size:12px; font-weight:700}
+    .tag.warn{background:#fef3c7; color:#92400e}
+    .tag.danger{background:#fee2e2; color:#991b1b}
+    .tag.ok{background:#dcfce7; color:#166534}
+
+    .section{display:none}
+    .section.active{display:block}
+
+    @media (max-width: 960px){
+      .layout{grid-template-columns: 1fr; grid-template-areas: "topbar" "main"}
+      .sidebar{display:none}
+    }
+
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <!-- barra lateral -->
+    <aside class="sidebar" aria-label="Navegação principal">
+      <div class="brand">
+        <div style="font-size:24px">💊</div>
+        <h1>Farmack</h1>
+      </div>
+      <div class="nav" id="nav">
+        <button data-section="dashboard" aria-current="page">📊 Dashboard</button>
+        <button data-section="produtos">📦 Produtos</button>
+        <button data-section="pdv">🧾 PDV</button>
+        <button data-section="alertas">⚠ Alertas</button>
+        <button data-section="relatorios">📈 Relatórios</button>
+      </div>
+      <div class="spacer"></div>
+      <button class="logout" id="logoutBtn">Sair</button>
+    </aside>
+
+    <!-- barra de cima -->
+    <header class="topbar">
+      <div class="search">
+        <span class="icon">🔎</span>
+        <input id="globalSearch" placeholder="Pesquisar produtos, vendas, clientes…" />
+      </div>
+      <span id="roleBadge" class="badge" title="Perfil do usuário">Perfil: Farmacêutico</span>
+    </header>
+
+    <!-- main -->
+    <main class="main">
+      <!-- dashboard -->
+      <section id="dashboard" class="section active">
+        <div class="kpis">
+          <div class="card kpi"><h3>Vendas (hoje)</h3><div class="value" id="kpiVendas">R$ 0,00</div><div class="hint" id="kpiVendasHint">0 transações</div></div>
+          <div class="card kpi"><h3>Itens com baixa estoque</h3><div class="value" id="kpiBaixa">0</div><div class="hint">Ponto de pedido atingido</div></div>
+          <div class="card kpi"><h3>Produtos a vencer (30 dias)</h3><div class="value" id="kpiVencer">0</div><div class="hint">Inclui lotes próximos do vencimento</div></div>
+          <div class="card kpi"><h3>Ticket médio (hoje)</h3><div class="value" id="kpiTicket">R$ 0,00</div><div class="hint">= valor total / nº de vendas</div></div>
+        </div>
+
+        <div class="grid" style="grid-template-columns: 1fr 1fr; gap:16px; margin-top:16px">
+          <div class="card">
+            <h3>Últimas vendas</h3>
+            <table id="tblUltimasVendas"><thead><tr><th>Hora</th><th>Itens</th><th>Total</th></tr></thead><tbody></tbody></table>
+          </div>
+          <div class="card">
+            <h3>Alertas recentes</h3>
+            <table id="tblAlertas"><thead><tr><th>Tipo</th><th>Produto</th><th>Status</th></tr></thead><tbody></tbody></table>
+          </div>
+        </div>
+      </section>
+
+      <!-- produtos -->
+      <section id="produtos" class="section">
+        <div class="card">
+          <div style="display:flex; gap:10px; align-items:center; justify-content:space-between">
+            <h3>Catálogo de Produtos</h3>
+            <div>
+              <input id="prodSearch" style="height:38px; border:1px solid var(--border); border-radius:10px; padding:0 10px" placeholder="Buscar por nome ou EAN" />
+              <button class="btn secondary" id="btnNovoProduto">+ Novo</button>
+            </div>
+          </div>
+          <table id="tblProdutos" style="margin-top:10px">
+            <thead><tr><th>EAN</th><th>Nome</th><th>Categoria</th><th>Preço</th><th>Estoque</th><th>Ações</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- pdv -->
+      <section id="pdv" class="section">
+        <div class="grid" style="grid-template-columns: 1fr 420px; gap:16px">
+          <div class="card">
+            <h3>Catálogo</h3>
+            <input id="pdvSearch" placeholder="Escaneie o EAN ou pesquise…" style="width:100%; height:40px; border:1px solid var(--border); border-radius:12px; padding:0 12px; margin-bottom:10px">
+            <table id="tblCatalogo"><thead><tr><th>EAN</th><th>Produto</th><th>Preço</th><th>Estoque</th><th></th></tr></thead><tbody></tbody></table>
+          </div>
+          <div class="card">
+            <h3>Carrinho</h3>
+            <table id="tblCarrinho"><thead><tr><th>Produto</th><th>Qtd</th><th>Subtotal</th><th></th></tr></thead><tbody></tbody></table>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px">
+              <strong>Total:</strong>
+              <div id="totalPdv">R$ 0,00</div>
+            </div>
+            <div style="display:flex; gap:8px; margin-top:12px">
+              <button class="btn" id="btnFinalizar">Finalizar (PIX)</button>
+              <button class="btn secondary" id="btnCancelar">Cancelar</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- alertas -->
+      <section id="alertas" class="section">
+        <div class="grid" style="grid-template-columns: 1fr 1fr; gap:16px">
+          <div class="card">
+            <h3>Estoque baixo</h3>
+            <table id="tblBaixo"><thead><tr><th>Produto</th><th>Estoque</th><th>Ponto Pedido</th><th>Status</th></tr></thead><tbody></tbody></table>
+          </div>
+          <div class="card">
+            <h3>Vencimento próximo (≤ 30 dias)</h3>
+            <table id="tblVencimento"><thead><tr><th>Produto</th><th>Lote</th><th>Validade</th><th>Status</th></tr></thead><tbody></tbody></table>
+          </div>
+        </div>
+      </section>
+
+      <!-- relatórios -->
+      <section id="relatorios" class="section">
+         <div class="card">
+          <h3>Vendas por dia (últimos 7 dias)</h3>
+          <canvas id="chart" height="220" aria-label="Gráfico de barras de vendas" role="img"></canvas>
+        </div>
+        <div class="card" style="margin-top:16px">
+          <h3>Movimentações recentes</h3>
+          <table id="tblMovs"><thead><tr><th>Data</th><th>Tipo</th><th>Produto</th><th>Qtd</th></tr></thead><tbody></tbody></table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- MODAL NOVO PRODUTO -->
+<div id="modalNovoProduto" class="modal hidden" aria-hidden="true">
+  <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <h2 id="modalTitle">Novo Produto</h2>
+
+    <!-- NOVO: Campo EAN -->
+    <label for="npEan" class="input-label">EAN (Código de Barras)</label>
+    <input id="npEan" type="text" class="input-field" />
+
+    <label for="npNome" class="input-label">Nome</label>
+    <input id="npNome" type="text" class="input-field" />
+
+    <!-- NOVO: Campo Categoria -->
+    <label for="npCategoria" class="input-label">Categoria</label>
+    <input id="npCategoria" type="text" class="input-field" />
+
+    <label for="npDescricao" class="input-label">Descrição</label>
+    <input id="npDescricao" type="text" class="input-field" />
+
+    <label for="npPreco" class="input-label">Preço</label>
+    <input id="npPreco" type="number" step="0.01" class="input-field" />
+
+    <label for="npEstoque" class="input-label">Estoque</label>
+    <input id="npEstoque" type="number" class="input-field" />
+
+    <label for="npLote" class="input-label">Lote</label>
+    <input id="npLote" type="text" class="input-field" />
+
+    <label for="npValidade" class="input-label">Validade</label>
+    <input id="npValidade" type="date" class="input-field" />
+
+    <div class="modal-actions">
+      <button class="btn secondary" id="btnFecharModal">Cancelar</button>
+      <button class="btn" id="btnSalvarProduto">Criar Produto</button>
+    </div>
+  </div>
+</div>
+
+
+  <script>
+    // === CONFIG ===
+    const API = 'http://localhost:3000';
+    // helpers
+    const today = new Date();
+    const money = v => Number(v || 0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+    const fmtDate = d => d ? new Date(d).toLocaleDateString('pt-BR') : '';
+    function timeOrDate(dt){
+      const d = new Date(dt);
+      const isToday = (new Date().toDateString() === d.toDateString());
+      return isToday ? d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}) : fmtDate(d);
+    }
+    function addDays(d, n){ const x = new Date(d); x.setDate(x.getDate()+n); return x; }
+    function diffDays(a,b){ const x = new Date(a); x.setHours(0,0,0,0); const y = new Date(b); y.setHours(0,0,0,0); return Math.round((x-y)/(1000*60*60*24)); }
+    function setTime(d, h, m){ const x = new Date(d); x.setHours(h,m,0,0); return x; }
+
+    // state
+    let produtos = [];
+    let vendas = [];
+    let movimentacoes = [];
+    const cart = new Map();
+    let produtoEmEdicaoId = null;
+
+    // DOM refs
+    const sections = [...document.querySelectorAll('.section')];
+    const nav = document.getElementById('nav');
+
+    // NAV
+    nav.addEventListener('click', (e)=>{
+      const btn = e.target.closest('button[data-section]');
+      if(!btn) return;
+      const id = btn.getAttribute('data-section');
+      sections.forEach(s => s.classList.toggle('active', s.id === id));
+      nav.querySelectorAll('button').forEach(b => b.removeAttribute('aria-current'));
+      btn.setAttribute('aria-current','page');
+      if(id==='relatorios') drawChart();
+    });
+
+    document.getElementById('logoutBtn').addEventListener('click', ()=>{
+      alert('Sessão encerrada.');
+      window.location.href = '/login.html';
+    });
+
+    // perfil
+    const role = (new URLSearchParams(location.search).get('role')) || 'Farmacêutico';
+    document.getElementById('roleBadge').textContent = `Perfil: ${role}`;
+
+    // ============= API calls =============
+    async function fetchProdutos(q = '') {
+      try {
+        const url = q ? `${API}/api/produtos?q=${encodeURIComponent(q)}` : `${API}/api/produtos`;
+        const res = await fetch(url);
+        if(!res.ok) throw new Error('Erro ao buscar produtos: ' + res.status);
+        produtos = await res.json();
+        produtos = produtos.map(p => {
+          if(p.lotes && Array.isArray(p.lotes)) return p;
+          const lote = p.lote ? { lote: p.lote, validade: p.validade } : undefined;
+          return { ...p, lotes: lote ? [lote] : [] };
+        });
+        renderProdutos(produtos);
+        renderCatalogo(produtos);
+        preencherAlertas();
+        atualizarDashboard();
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    async function fetchVendas() {
+      try {
+        const res = await fetch(`${API}/api/vendas`);
+        if(!res.ok) throw new Error('Erro ao buscar vendas: ' + res.status);
+        vendas = await res.json();
+        vendas = vendas.map(v => ({ ...v, data: new Date(v.data || v.data_venda || v.created_at || Date.now()) }));
+        atualizarDashboard();
+        renderUltimasVendas();
+        drawChart();
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    async function fetchMovimentacoes() {
+      try {
+        const res = await fetch(`${API}/api/movimentacoes`);
+        if(!res.ok) throw new Error('Erro ao buscar movimentações: ' + res.status);
+        movimentacoes = await res.json();
+        movimentacoes = movimentacoes.map(m => ({ ...m, data: new Date(m.data || Date.now()) }));
+        renderMovimentacoes();
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    async function deleteProduto(id) {
+      if (!confirm('Tem certeza que deseja excluir este produto?')) return;
+      try {
+        const resp = await fetch(`${API}/api/produtos/${id}`, {
+          method: 'DELETE',
+        });
+        
+        if (resp.status === 204) { 
+          alert('Produto excluído com sucesso!');
+          await fetchProdutos(); 
+        } else if (resp.status === 404) {
+          alert('Erro: Produto não encontrado.');
+        } else {
+          const json = await resp.json().catch(() => ({}));
+          throw new Error(json.error || 'Erro ao excluir produto');
+        }
+      } catch (err) {
+        console.error(err);
+        alert('Erro ao excluir produto: ' + (err.message || 'Erro desconhecido'));
+      }
+    }
+
+    // ============= RENDERERS =============
+    const tblProdutosBody = document.querySelector('#tblProdutos tbody');
+    function renderProdutos(list){
+      tblProdutosBody.innerHTML = list.map(p => `
+        <tr>
+          <td>${p.ean || ''}</td>
+          <td>${p.nome || ''}</td>
+          <td>${p.categoria || ''}</td>
+          <td>${money(p.preco)}</td>
+          <td>${p.estoque ?? p.estoque ?? 0}</td>
+          <td>
+          <div style="display:flex; gap:8px;">
+          <button class="btn secondary" data-add="${p.id}">PDV</button>
+          <button class="btn secondary" data-edit="${p.id}">Editar</button>
+          <button class="btn secondary" data-delete="${p.id}" style="background:#fef2f2; color:#b91c1c;">Excluir</button>
+          </div>
+        </td>
+        </tr>`).join('');
+    }
+
+    function renderCatalogo(list){
+      const tbody = document.querySelector('#tblCatalogo tbody');
+      tbody.innerHTML = list.map(p => `
+        <tr>
+          <td>${p.ean || ''}</td>
+          <td>${p.nome || ''}</td>
+          <td>${money(p.preco)}</td>
+          <td>${p.estoque ?? p.estoque ?? 0}</td>
+          <td><button class="btn" data-buy="${p.id}">Adicionar</button></td>
+        </tr>`).join('');
+    }
+
+    function renderCart(){
+      const tbody = document.querySelector('#tblCarrinho tbody');
+      let total = 0;
+      tbody.innerHTML = [...cart.values()].map(({prod,q})=>{
+        const sub = (prod.preco || 0) * q; total += sub;
+        return `<tr>
+          <td>${prod.nome}</td>
+          <td>
+            <button class="btn secondary" data-dec="${prod.id}">−</button>
+            <span style="margin:0 8px">${q}</span>
+            <button class="btn secondary" data-inc="${prod.id}">+</button>
+          </td>
+          <td>${money(sub)}</td>
+          <td><button class="btn secondary" data-rem="${prod.id}">Remover</button></td>
+        </tr>`;
+      }).join('');
+      document.getElementById('totalPdv').textContent = money(total);
+    }
+
+    function renderUltimasVendas(){
+      const tbody = document.querySelector('#tblUltimasVendas tbody');
+      const items = (vendas || []).slice().sort((a,b)=> b.data - a.data).slice(0,5);
+      tbody.innerHTML = items.map(v => {
+        const count = (v.itens || []).reduce((s,i)=> s + (i.q || i.estoque || 0), 0);
+        return `<tr><td>${timeOrDate(v.data)}</td><td>${count}</td><td>${money(v.total)}</td></tr>`;
+      }).join('');
+    }
+
+    function preencherAlertas(){
+      const tbodyB = document.querySelector('#tblBaixo tbody');
+      const low = produtos.filter(p => (p.estoque ?? p.estoque ?? 0) <= (p.pontoPedido ?? 0));
+      tbodyB.innerHTML = low.map(p=> `
+        <tr>
+          <td>${p.nome}</td>
+          <td>${p.estoque ?? p.estoque ?? 0}</td>
+          <td>${p.pontoPedido ?? '-'}</td>
+          <td><span class="tag warn">Repor</span></td>
+        </tr>`).join('');
+
+      const tbodyV = document.querySelector('#tblVencimento tbody');
+      const near = [];
+      produtos.forEach(p=>{
+        (p.lotes || []).forEach(l=>{
+          const validade = l.validade || l.valid_until || l.date || null;
+          if(!validade) return;
+          const d = diffDays(validade, new Date());
+          if(d <= 30) near.push({nome:p.nome, lote: l.lote || l.lote_number || '-', validade, dias: d});
+        });
+      });
+      tbodyV.innerHTML = near.map(n=> `
+        <tr>
+          <td>${n.nome}</td>
+          <td>${n.lote}</td>
+          <td>${fmtDate(n.validade)}</td>
+          <td><span class="tag danger">${n.dias} dias</span></td>
+        </tr>`).join('');
+    }
+
+    function renderMovimentacoes(){
+      const tbody = document.querySelector('#tblMovs tbody');
+      tbody.innerHTML = (movimentacoes || []).slice().sort((a,b)=> b.data - a.data).slice(0,50).map(m => `
+        <tr>
+          <td>${fmtDate(m.data)}</td>
+          <td>${m.tipo || '-'}</td>
+          <td>${m.produto_nome || m.prod || m.produto_id || '-'}</td>
+          <td>${m.estoque ?? m.qtd ?? m.q ?? '-'}</td>
+        </tr>`).join('');
+    }
+
+    // ============= INTERAÇÕES =============
+    document.getElementById('prodSearch').addEventListener('input', async (e)=>{
+      const q = e.target.value.trim();
+      if(q.length === 0) return fetchProdutos();
+      await fetchProdutos(q);
+    });
+
+    document.getElementById('globalSearch').addEventListener('input', (e)=>{
+      const q = e.target.value.toLowerCase();
+      const filtered = produtos.filter(p => [String(p.nome||''), String(p.ean||''), String(p.categoria||'')].some(x => x.toLowerCase().includes(q)));
+      renderProdutos(filtered);
+      renderCatalogo(filtered);
+    });
+
+    // delegations
+tblProdutosBody.addEventListener('click',(e)=>{
+  const addBtn = e.target.closest('[data-add]');
+  const deleteBtn = e.target.closest('[data-delete]');
+  const editBtn = e.target.closest('[data-edit]');
+
+  if(addBtn){
+    const id = parseInt(addBtn.getAttribute('data-add'),10);
+    if(id){ addToCart(id); switchTo('pdv'); }
+  }
+
+  if(deleteBtn){
+    const id = parseInt(deleteBtn.getAttribute('data-delete'),10);
+    if(id){ deleteProduto(id); }
+  }
+  
+  if(editBtn){
+    const id = parseInt(editBtn.getAttribute('data-edit'),10);
+    if(id){ openModal(id); }
+  }
+});
+
+
+    document.querySelector('#tblCatalogo tbody').addEventListener('click',(e)=>{
+      const btn = e.target.closest('[data-buy]');
+      if(!btn) return;
+      const id = parseInt(btn.getAttribute('data-buy'),10);
+      if(id) addToCart(id);
+    });
+
+    document.querySelector('#tblCarrinho tbody').addEventListener('click',(e)=>{
+      const incBtn = e.target.closest('[data-inc]');
+      const decBtn = e.target.closest('[data-dec]');
+      const remBtn = e.target.closest('[data-rem]');
+      const id = parseInt((incBtn||decBtn||remBtn)?.getAttribute('data-inc') || (incBtn||decBtn||remBtn)?.getAttribute('data-dec') || (incBtn||decBtn||remBtn)?.getAttribute('data-rem') || '0', 10);
+      if(!id) return;
+      const entry = cart.get(id); if(!entry) return;
+      if(incBtn){ if(entry.prod.estoque > entry.q) entry.q++; }
+      if(decBtn){ entry.q = Math.max(1, entry.q-1); }
+      if(remBtn){ cart.delete(id); }
+      renderCart();
+    });
+
+    document.getElementById('btnCancelar').addEventListener('click', ()=>{ cart.clear(); renderCart(); });
+
+    document.getElementById('btnFinalizar').addEventListener('click', async ()=>{
+      if(cart.size===0){ alert('Carrinho vazio.'); return; }
+      const itens = []; let total = 0;
+      cart.forEach(({prod,q})=> { itens.push({ id: prod.id, q, preco: prod.preco }); total += (prod.preco||0)*q; });
+      try {
+        const resp = await fetch(`${API}/api/vendas`, {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ itens, total })
+        });
+        if(!resp.ok){
+          const json = await resp.json().catch(()=>({}));
+          throw new Error(json.error || 'Erro ao finalizar venda');
+        }
+        cart.clear(); renderCart(); await Promise.all([fetchProdutos(), fetchVendas(), fetchMovimentacoes()]);
+        alert('Venda registrada com sucesso (PIX).');
+      } catch (err) {
+        console.error(err);
+        alert('Erro ao registrar venda: ' + (err.message || 'Erro'));
+      }
+    });
+
+    function addToCart(id){
+      const p = produtos.find(x=> Number(x.id) === Number(id));
+      if(!p) { alert('Produto não encontrado'); return; }
+      const current = cart.get(id) || { prod: p, q: 0 };
+      if((p.estoque ?? p.estoque ?? 0) - (current.q + 1) < 0){ alert('Estoque insuficiente.'); return; }
+      current.q += 1;
+      cart.set(id, current);
+      renderCart();
+    }
+
+    function atualizarDashboard(){
+      const inicioHoje = new Date(); inicioHoje.setHours(0,0,0,0);
+      const fimHoje = new Date(); fimHoje.setHours(23,59,59,999);
+
+      const vendasHoje = (vendas || []).filter(v => {
+        const d = new Date(v.data);
+        return d >= inicioHoje && d <= fimHoje;
+      });
+      const totalHoje = vendasHoje.reduce((s,v)=> s + Number(v.total || 0), 0);
+      const ticket = vendasHoje.length ? totalHoje / vendasHoje.length : 0;
+
+      document.getElementById('kpiVendas').textContent = money(totalHoje);
+      document.getElementById('kpiVendasHint').textContent = `${vendasHoje.length} transações`;
+      document.getElementById('kpiTicket').textContent = money(ticket);
+
+      const baixa = produtos.filter(p => (p.estoque ?? p.estoque ?? 0) <= (p.pontoPedido ?? 0)).length;
+      document.getElementById('kpiBaixa').textContent = baixa;
+
+      const vencer = produtos.filter(p => (p.lotes || []).some(l => diffDays(l.validade, today) <= 30)).length;
+      document.getElementById('kpiVencer').textContent = vencer;
+
+      renderUltimasVendas();
+      preencherAlertas();
+    }
+
+    // CHART ()
+    function drawChart(){
+      const canvas = document.getElementById('chart');
+      if (!canvas || canvas.offsetParent === null) return; 
+      
+      const ctx = canvas.getContext('2d');
+      
+      const W_CONTAINER = canvas.parentElement.clientWidth;
+      const W = canvas.width = W_CONTAINER * 0.7;
+      const H = canvas.height = 220;
+      
+      ctx.clearRect(0,0,W,H); 
+
+      const days = [...Array(7)].map((_,i)=> addDays(today, -(6-i)));
+      const totals = days.map(d=>{
+        const start = new Date(d); start.setHours(0,0,0,0);
+        const end = new Date(d); end.setHours(23,59,59,999);
+        return (vendas || []).filter(v=> {
+          const vd = new Date(v.data);
+          return vd >= start && vd <= end;
+        }).reduce((s,v)=> s+Number(v.total || 0), 0);
+      });
+
+  if (totals.every(t => t === 0)) {
+    const padding = 28;
+    ctx.strokeStyle = '#e5e7eb';
+    ctx.beginPath();
+    ctx.moveTo(padding, H - padding);
+    ctx.lineTo(W - padding, H - padding);
+    ctx.stroke();
+    return;
+  }
+  
+  const padding = 28;
+  const max = Math.max(...totals, 50);
+  const barW = (W - padding*2) / totals.length * .7;
+  const step = (W - padding*2) / totals.length;
+
+  ctx.font = '12px Inter, sans-serif';
+  ctx.fillStyle = '#6b7280';
+  ctx.textAlign = 'left';
+  ctx.fillText('Valores (R$)', 8, 14);
+
+  totals.forEach((val, i)=>{
+    const x = padding + i*step + (step - barW)/2;
+    const h = (val / max) * (H - padding*2);
+    const y = H - padding - h;
+    ctx.fillStyle = '#2563eb';
+    ctx.fillRect(x, y, barW, h);
+    ctx.fillStyle = '#111827';
+    ctx.textAlign = 'center';
+    ctx.fillText(money(val), x + barW/2, y - 4);
+    ctx.fillStyle = '#6b7280';
+    ctx.fillText(days[i].toLocaleDateString('pt-BR',{weekday:'short'}), x + barW/2, H - padding + 14);
+  });
+
+  ctx.strokeStyle = '#e5e7eb';
+  ctx.beginPath();
+  ctx.moveTo(padding, H - padding);
+  ctx.lineTo(W - padding, H - padding);
+  ctx.stroke();
+}
+
+    // === MODAL LOGIC ===
+    // === MODAL LOGIC (UNIFICADO) ===
+const modalNovo = document.getElementById('modalNovoProduto');
+const btnNovo = document.getElementById('btnNovoProduto');
+const btnFechar = document.getElementById('btnFecharModal');
+const btnSalvar = document.getElementById('btnSalvarProduto');
+const modalTitle = document.getElementById('modalTitle');
+
+function openModal(id = null) {
+  produtoEmEdicaoId = id;
+  modalTitle.textContent = id ? 'Editar Produto' : 'Novo Produto';
+  btnSalvar.textContent = id ? 'Salvar Alterações' : 'Criar Produto';
+  
+  // Limpa os campos antes de abrir
+  document.getElementById('npEan').value = '';
+  document.getElementById('npNome').value = '';
+  document.getElementById('npCategoria').value = '';
+  document.getElementById('npDescricao').value = '';
+  document.getElementById('npPreco').value = '';
+  document.getElementById('npEstoque').value = '';
+  document.getElementById('npLote').value = '';
+  document.getElementById('npValidade').value = '';
+
+  if (id) {
+    const produto = produtos.find(p => p.id === id);
+    if (produto) {
+      // Preenche os campos para edição
+      document.getElementById('npEan').value = produto.ean || '';
+      document.getElementById('npNome').value = produto.nome || '';
+      document.getElementById('npCategoria').value = produto.categoria || '';
+      document.getElementById('npDescricao').value = produto.descricao || '';
+      document.getElementById('npPreco').value = produto.preco || 0;
+      document.getElementById('npEstoque').value = produto.estoque || produto.estoque || 0;
+      document.getElementById('npLote').value = produto.lote || '';
+      document.getElementById('npValidade').value = produto.validade ? new Date(produto.validade).toISOString().split('T')[0] : '';
+    }
+  }
+
+  modalNovo.classList.remove('hidden');
+  modalNovo.setAttribute('aria-hidden', 'false');
+}
+
+function closeModal() {
+  modalNovo.classList.add('hidden');
+  modalNovo.setAttribute('aria-hidden', 'true');
+  produtoEmEdicaoId = null;
+}
+
+async function saveProduto() {
+  const ean = document.getElementById('npEan').value.trim();
+  const nome = document.getElementById('npNome').value.trim();
+  const categoria = document.getElementById('npCategoria').value.trim();
+  const descricao = document.getElementById('npDescricao').value.trim();
+  const preco = parseFloat(document.getElementById('npPreco').value);
+  const estoque = parseInt(document.getElementById('npEstoque').value, 10);
+  const lote = document.getElementById('npLote').value.trim();
+  const validade = document.getElementById('npValidade').value;
+
+  if (!nome || Number.isNaN(preco) || Number.isNaN(estoque)) {
+    alert('Nome, Preço e Estoque são obrigatórios.');
+    return;
+  }
+
+  const data = {
+    ean,
+    nome,
+    categoria,
+    descricao,
+    preco,
+    estoque: estoque,
+    lote,
+    validade: validade || null
+  };
+
+  const method = produtoEmEdicaoId ? 'PUT' : 'POST';
+  const url = produtoEmEdicaoId ? `${API}/api/produtos/${produtoEmEdicaoId}` : `${API}/api/produtos`;
+
+  try {
+    const resp = await fetch(url, {
+      method: method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+
+    if (!resp.ok) {
+      const json = await resp.json().catch(() => ({}));
+      throw new Error(json.error || `Erro ao ${produtoEmEdicaoId ? 'atualizar' : 'criar'} produto`);
+    }
+
+    alert(`Produto ${produtoEmEdicaoId ? 'atualizado' : 'criado'} com sucesso!`);
+    closeModal();
+    await fetchProdutos(); 
+  } catch (err) {
+    console.error('Erro ao salvar produto', err);
+    alert(`Erro ao ${produtoEmEdicaoId ? 'atualizar' : 'criar'} produto: ` + (err.message || 'Erro desconhecido'));
+  }
+}
+
+// Event Listeners
+btnNovo.addEventListener('click', () => openModal());
+btnFechar.addEventListener('click', closeModal);
+btnSalvar.addEventListener('click', saveProduto);
+
+    function switchTo(id){
+      sections.forEach(s => s.classList.toggle('active', s.id === id));
+      nav.querySelectorAll('button').forEach(b => b.setAttribute('aria-current', b.getAttribute('data-section')===id ? 'page' : 'false'));
+    }
+
+    // Inicialização
+    async function boot(){
+      await Promise.all([fetchProdutos(), fetchVendas(), fetchMovimentacoes()]);
+      renderCart();
+      drawChart();
+    }
+    boot();
+  </script>
+</body>
+</html>
