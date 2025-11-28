@@ -42,8 +42,13 @@ async function createVenda(venda) {
 }
 
 async function list(limit = 50){
-  const [rows] = await pool.query('SELECT * FROM vendas ORDER BY data DESC LIMIT ?', [Number(limit)]);
-  return rows;
+  const [vendas] = await pool.query('SELECT * FROM vendas ORDER BY data DESC LIMIT ?', [Number(limit)]);
+    for (const venda of vendas) {
+    const [itens] = await pool.query('SELECT vi.*, p.nome FROM venda_itens vi LEFT JOIN produtos p ON p.id = vi.produto_id WHERE vi.venda_id = ?', [venda.id]);
+    venda.itens = itens;
+  }
+  
+  return vendas;
 }
 
 async function getById(id){

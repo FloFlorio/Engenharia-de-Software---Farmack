@@ -6,6 +6,10 @@
   <title>Farmack — Tela Principal</title>
   <style>
 
+    #chart {
+  width: 100%;
+}
+
     /* Adicionar na seção <style> */
       .input-label {
         font-weight: 600;
@@ -218,7 +222,7 @@
 
       <!-- relatórios -->
       <section id="relatorios" class="section">
-        <div class="card">
+         <div class="card">
           <h3>Vendas por dia (últimos 7 dias)</h3>
           <canvas id="chart" height="220" aria-label="Gráfico de barras de vendas" role="img"></canvas>
         </div>
@@ -309,7 +313,7 @@
 
     document.getElementById('logoutBtn').addEventListener('click', ()=>{
       alert('Sessão encerrada.');
-      window.location.href = '/login';
+      window.location.href = '';
     });
 
     // perfil
@@ -607,49 +611,68 @@ tblProdutosBody.addEventListener('click',(e)=>{
 
     // CHART (kept same)
     function drawChart(){
-      const canvas = document.getElementById('chart');
-      const ctx = canvas.getContext('2d');
-      ctx.clearRect(0,0,canvas.width,canvas.height);
+  const canvas = document.getElementById('chart');
+  // NOVO: Verifica se o canvas existe e se está visível
+  if (!canvas || canvas.offsetParent === null) return; 
+  
+  const ctx = canvas.getContext('2d');
+  
+  // NOVO: Garante que o canvas tem o tamanho correto antes de desenhar
+  const W_CONTAINER = canvas.parentElement.clientWidth;
+  const W = canvas.width = W_CONTAINER * 0.7;
+  const H = canvas.height = 220; // Altura fixa
+  
+  ctx.clearRect(0,0,W,H); // Limpa a área
 
-      const days = [...Array(7)].map((_,i)=> addDays(today, -(6-i)));
-      const totals = days.map(d=>{
-        const start = new Date(d); start.setHours(0,0,0,0);
-        const end = new Date(d); end.setHours(23,59,59,999);
-        return (vendas || []).filter(v=> {
-          const vd = new Date(v.data);
-          return vd >= start && vd <= end;
-        }).reduce((s,v)=> s+Number(v.total || 0), 0);
-      });
+  const days = [...Array(7)].map((_,i)=> addDays(today, -(6-i)));
+  const totals = days.map(d=>{
+    const start = new Date(d); start.setHours(0,0,0,0);
+    const end = new Date(d); end.setHours(23,59,59,999);
+    return (vendas || []).filter(v=> {
+      const vd = new Date(v.data);
+      return vd >= start && vd <= end;
+    }).reduce((s,v)=> s+Number(v.total || 0), 0);
+  });
 
-      const padding = 28; const W = canvas.width = canvas.clientWidth; const H = canvas.height = 220;
-      const max = Math.max(...totals, 50);
-      const barW = (W - padding*2) / totals.length * .7;
-      const step = (W - padding*2) / totals.length;
+  if (totals.every(t => t === 0)) {
+    const padding = 28;
+    ctx.strokeStyle = '#e5e7eb';
+    ctx.beginPath();
+    ctx.moveTo(padding, H - padding);
+    ctx.lineTo(W - padding, H - padding);
+    ctx.stroke();
+    return;
+  }
+  
+  const padding = 28;
+  const max = Math.max(...totals, 50);
+  const barW = (W - padding*2) / totals.length * .7;
+  const step = (W - padding*2) / totals.length;
 
-      ctx.font = '12px Inter, sans-serif';
-      ctx.fillStyle = '#6b7280';
-      ctx.textAlign = 'left';
-      ctx.fillText('Valores (R$)', 8, 14);
+  ctx.font = '12px Inter, sans-serif';
+  ctx.fillStyle = '#6b7280';
+  ctx.textAlign = 'left';
+  ctx.fillText('Valores (R$)', 8, 14);
 
-      totals.forEach((val, i)=>{
-        const x = padding + i*step + (step - barW)/2;
-        const h = (val / max) * (H - padding*2);
-        const y = H - padding - h;
-        ctx.fillStyle = '#2563eb';
-        ctx.fillRect(x, y, barW, h);
-        ctx.fillStyle = '#111827';
-        ctx.textAlign = 'center';
-        ctx.fillText(money(val), x + barW/2, y - 4);
-        ctx.fillStyle = '#6b7280';
-        ctx.fillText(days[i].toLocaleDateString('pt-BR',{weekday:'short'}), x + barW/2, H - padding + 14);
-      });
+  totals.forEach((val, i)=>{
+    const x = padding + i*step + (step - barW)/2;
+    const h = (val / max) * (H - padding*2);
+    const y = H - padding - h;
+    ctx.fillStyle = '#2563eb';
+    ctx.fillRect(x, y, barW, h);
+    ctx.fillStyle = '#111827';
+    ctx.textAlign = 'center';
+    ctx.fillText(money(val), x + barW/2, y - 4);
+    ctx.fillStyle = '#6b7280';
+    ctx.fillText(days[i].toLocaleDateString('pt-BR',{weekday:'short'}), x + barW/2, H - padding + 14);
+  });
 
-      ctx.strokeStyle = '#e5e7eb';
-      ctx.beginPath();
-      ctx.moveTo(padding, H - padding);
-      ctx.lineTo(W - padding, H - padding);
-      ctx.stroke();
-    }
+  ctx.strokeStyle = '#e5e7eb';
+  ctx.beginPath();
+  ctx.moveTo(padding, H - padding);
+  ctx.lineTo(W - padding, H - padding);
+  ctx.stroke();
+}
 
     // === MODAL LOGIC ===
     // === MODAL LOGIC (UNIFICADO) ===

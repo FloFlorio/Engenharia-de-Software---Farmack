@@ -10,6 +10,7 @@ const { swaggerUi, specs } = require("./swagger");
 const produtosRoute = require("./routes/produtos");
 const vendasRoute = require("./routes/vendas");
 const movsRoute = require("./routes/movimentacoes");
+const authRoute = require("./routes/auth"); 
 
 const app = express();
 app.use(cors());
@@ -25,6 +26,7 @@ app.get("/", (req, res) => {
 });
 
 // ========== ROTAS ==========
+app.use("/api/auth", authRoute);
 app.use("/api/produtos", produtosRoute);
 app.use("/api/vendas", vendasRoute);
 app.use("/api/movimentacoes", movsRoute);

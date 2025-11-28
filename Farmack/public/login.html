@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Farmack — Login</title>
+  <style>
+    :root{
+      --bg: #f6f7fb;
+      --card: #ffffff;
+      --text: #1f2937; /* slate-800 */
+      --muted: #6b7280; /* gray-500 */
+      --primary: #2563eb; /* blue-600 */
+      --primary-pressed: #1d4ed8; /* blue-700 */
+      --ring: rgba(37,99,235,.25);
+      --success: #16a34a;
+      --danger: #dc2626;
+      --shadow: 0 10px 25px rgba(0,0,0,.08);
+      --radius: 16px;
+    }
+    * { box-sizing: border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0; font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, "Helvetica Neue", Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      color:var(--text); background: var(--bg);
+      display:grid; place-items:center;
+    }
+    .container{
+      width: min(420px, 92vw);
+    }
+    .brand{ text-align:center; margin-bottom: 18px; }
+    .brand h1{ margin:0; font-size: clamp(28px, 5vw, 40px); letter-spacing:.3px; }
+    .card{
+      background:var(--card); border-radius: var(--radius); box-shadow: var(--shadow);
+      padding: 28px; position:relative;
+    }
+    .card h2{ margin:0 0 16px; font-size: 22px; }
+    form{ display:grid; gap:14px; }
+    label{ font-size: 14px; font-weight: 600; }
+    .field{
+      position:relative; display:grid; gap:6px;
+    }
+    .input{
+      width:100%; height:44px; padding: 0 14px; font-size:16px; color:var(--text);
+      background:#fff; border:1px solid #e5e7eb; border-radius: 12px;
+      outline:none; transition: box-shadow .2s, border-color .2s;
+    }
+    .input:focus{ border-color: var(--primary); box-shadow: 0 0 0 4px var(--ring); }
+    .input[aria-invalid="true"]{ border-color: var(--danger); }
+
+    .password-wrapper{ position:relative; }
+    .toggle-eye{
+      position:absolute; top:50%; right:10px; transform: translateY(-50%);
+      border:0; background:transparent; cursor:pointer; padding:6px; border-radius:8px;
+    }
+    .toggle-eye:focus-visible{ outline: 2px solid var(--primary); outline-offset: 2px; }
+
+    .row{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
+    .checkbox{ display:flex; align-items:center; gap:8px; font-size:14px; color:var(--muted); }
+    .checkbox input{ width:16px; height:16px; }
+
+    .btn{
+      height:46px; border-radius:12px; border:0; cursor:pointer; font-weight:600; font-size:16px;
+      background:var(--primary); color:#fff; box-shadow: 0 6px 14px rgba(37,99,235,.25);
+      transition: transform .02s ease, background .2s;
+    }
+    .btn:active{ transform: translateY(1px); }
+    .btn:hover{ background: var(--primary-pressed); }
+    .btn[disabled]{ opacity:.6; cursor:not-allowed; box-shadow:none; }
+
+    .helper{ text-align:center; margin-top:8px; }
+    .link{ color:var(--text); text-decoration:none; font-size:14px; }
+    .link:hover{ text-decoration: underline; }
+
+    .alert{ display:none; border-radius:12px; padding:10px 12px; font-size:14px; margin-bottom:12px; }
+    .alert.error{ display:block; background:#fee2e2; color:#991b1b; border:1px solid #fecaca; }
+    .alert.success{ display:block; background:#dcfce7; color:#166534; border:1px solid #bbf7d0; }
+
+    .sr-only{ position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+
+    @keyframes pop { from{ transform: translateY(6px); opacity:.0 } to{ transform: translateY(0); opacity:1 } }
+    .card{ animation: pop .18s ease-out; }
+  </style>
+</head>
+<body>
+  <main class="container" role="main">
+    <div class="brand" aria-hidden="true">
+      <h1>Farmack</h1>
+    </div>
+
+    <section class="card" aria-labelledby="login-title">
+      <h2 id="login-title">Login</h2>
+
+      <div id="alert" class="alert" role="alert" aria-live="polite"></div>
+
+      <form id="loginForm" novalidate>
+        <div class="field">
+          <label for="email">E-mail</label>
+          <input id="email" name="email" class="input" type="email" inputmode="email"
+                 autocomplete="email" required aria-describedby="userHelp" />
+          <div id="userHelp" class="sr-only">Digite seu e-mail corporativo</div>
+        </div>
+
+        <div class="field">
+          <div class="row" style="justify-content:space-between">
+            <label for="password">Senha</label>
+            <a class="link" href="#" id="forgotLink">Esqueci minha senha</a>
+          </div>
+          <div class="password-wrapper">
+            <input id="password" name="password" class="input" type="password" autocomplete="current-password" required />
+            <button type="button" class="toggle-eye" id="toggleEye" aria-label="Mostrar senha" title="Mostrar/ocultar senha">
+              👁
+            </button>
+          </div>
+        </div>
+
+        <div class="row">
+          <label class="checkbox"><input type="checkbox" id="remember" /> Lembrar de mim</label>
+          <span aria-hidden="true" style="font-size:12px;color:var(--muted)">v1.0</span>
+        </div>
+
+        <button id="submitBtn" class="btn" type="submit">Entrar</button>
+      </form>
+
+      <p class="helper" style="color:var(--muted); margin-top:14px">
+        Não tem conta? <a class="link" href="/register.html">Crie uma conta</a>
+      </p>
+      <p class="helper" style="color:var(--muted); margin-top:4px">Acesso restrito a usuários autorizados.</p>
+    </section>
+  </main>
+
+  <script>
+    const f = document.getElementById('loginForm');
+    const alertEl = document.getElementById('alert');
+    const submitBtn = document.getElementById('submitBtn');
+    const emailEl = document.getElementById('email'); // Alterado de username para email
+    const passEl = document.getElementById('password');
+    const toggleEye = document.getElementById('toggleEye');
+    const rememberEl = document.getElementById('remember');
+
+    // Carregar email salvo se "lembrar de mim" estava ativado
+    const savedEmail = localStorage.getItem('farmack_email');
+    if (savedEmail) {
+      emailEl.value = savedEmail;
+      rememberEl.checked = true;
+    }
+
+    // Mostrar/ocultar senha
+    toggleEye.addEventListener('click', () => {
+      const showing = passEl.type === 'text';
+      passEl.type = showing ? 'password' : 'text';
+      toggleEye.setAttribute('aria-label', showing ? 'Mostrar senha' : 'Ocultar senha');
+    });
+
+    function showError(msg){
+      alertEl.className = 'alert error';
+      alertEl.textContent = msg;
+    }
+    function showSuccess(msg){
+      alertEl.className = 'alert success';
+      alertEl.textContent = msg;
+    }
+
+    function setBusy(busy){
+      submitBtn.disabled = busy;
+      submitBtn.textContent = busy ? 'Entrando…' : 'Entrar';
+    }
+
+    f.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      alertEl.className = 'alert';
+
+      const email = emailEl.value.trim(); // Alterado de username para email
+      const password = passEl.value;
+      const remember = rememberEl.checked;
+
+      emailEl.setAttribute('aria-invalid', email ? 'false' : 'true');
+      passEl.setAttribute('aria-invalid', password ? 'false' : 'true');
+
+      if(!email || !password){
+        showError('Preencha e-mail e senha.'); // Alterado de usuário para e-mail
+        return;
+      }
+
+      try{
+        setBusy(true);
+
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password }) // Enviando email e password
+        });
+
+        const data = await res.json();
+
+        if (data.success) {
+          // Salvar token JWT
+          localStorage.setItem('farmack_token', data.token);
+          
+          // Salvar email se "lembrar de mim" estiver marcado
+          if (remember) {
+            localStorage.setItem('farmack_email', email); // Alterado de username para email
+          } else {
+            localStorage.removeItem('farmack_email'); // Alterado de username para email
+          }
+
+          showSuccess('Login realizado com sucesso! Redirecionando…');
+          
+          setTimeout(() => {
+            window.location.href = '/main.html';
+          }, 800);
+        } else {
+          showError(data.message || 'Credenciais inválidas. Verifique e-mail e senha.'); // Alterado de usuário para e-mail
+          setBusy(false);
+        }
+      } catch(err){
+        console.error(err);
+        showError('Não foi possível realizar o login no momento. Tente novamente.');
+        setBusy(false);
+      }
+    });
+
+    // Esqueci a senha
+    document.getElementById('forgotLink').addEventListener('click', (e) => {
+      e.preventDefault();
+      showSuccess('Entre em contato com o administrador para redefinir sua senha.');
+    });
+  </script>
+</body>
+</html>
