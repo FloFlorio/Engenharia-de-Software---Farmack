@@ -5,7 +5,7 @@ API para controle de estoque de farmácias, com pipeline CI/CD automatizada no G
 ## 🧰 Tecnologias
 - Node.js + Express
 - GitHub Actions (CI/CD)
-- Docker + AWS ECR + ECS
+- Docker + AWS ECR + ECS (Não implementados)
 
 ## 🚀 Executar localmente
 
@@ -13,11 +13,10 @@ API para controle de estoque de farmácias, com pipeline CI/CD automatizada no G
 cd ~/Documents
 git clone https://github.com/FernandoMathias/Engenharia-de-Software---Farmack.git
 cd Engenharia-de-Software---Farmack
-npm install
-npm start
+node server.js
 
-abra no navegador para acessar a tela de login
+# abra no navegador para acessar a tela de login
 http://localhost:3000/
 
-abra no navegador para acessar a tela principal
-http://localhost:3000/second
+# Baixe o arquivo schema.sql
+mysql -u root -p < schema.sql
