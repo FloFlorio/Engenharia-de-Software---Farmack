@@ -8,10 +8,10 @@
     :root{
       --bg: #f6f7fb;
       --card: #ffffff;
-      --text: #1f2937; /* slate-800 */
-      --muted: #6b7280; /* gray-500 */
-      --primary: #2563eb; /* blue-600 */
-      --primary-pressed: #1d4ed8; /* blue-700 */
+      --text: #1f2937; 
+      --muted: #6b7280; 
+      --primary: #2563eb; 
+      --primary-pressed: #1d4ed8;
       --ring: rgba(37,99,235,.25);
       --success: #16a34a;
       --danger: #dc2626;
@@ -129,7 +129,6 @@
     const passEl = document.getElementById('password');
     const toggleEye = document.getElementById('toggleEye');
 
-    // mostrar/ocultar senha
     toggleEye.addEventListener('click', () => {
       const showing = passEl.type === 'text';
       passEl.type = showing ? 'password' : 'text';
@@ -179,12 +178,10 @@
         if (data.success) {
           showSuccess('Conta criada com sucesso! Redirecionando para o Login...');
           
-          // Redirecionar para a página de login após o sucesso
           setTimeout(() => {
             window.location.href = '/login.html';
           }, 1500);
         } else {
-          // Exibir erro retornado pelo backend (validação de email, senha, unicidade)
           showError(data.message || 'Erro ao cadastrar. Tente novamente.');
           setBusy(false);
         }

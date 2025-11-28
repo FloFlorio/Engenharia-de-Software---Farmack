@@ -1,10 +1,9 @@
 // controllers/authController.js
 const userModel = require("../models/userModel");
-const jwt = require("jsonwebtoken"); // Necessário para gerar o token JWT
+const jwt = require("jsonwebtoken");
 
-// Chave secreta para JWT (deve ser lida do .env)
 const JWT_SECRET = process.env.JWT_SECRET || "sua_chave_secreta_aqui_mude_em_producao";
-const JWT_EXPIRES_IN = "7d"; // Token expira em 7 dias
+const JWT_EXPIRES_IN = "7d"; 
 
 /**
  * Valida o formato do email usando regex
@@ -45,7 +44,6 @@ async function register(req, res) {
   try {
     const { email, password } = req.body;
 
-    // 1. Validação de campos obrigatórios
     if (!email || !password) {
       return res.status(400).json({
         success: false,
@@ -53,7 +51,6 @@ async function register(req, res) {
       });
     }
 
-    // 2. Validação de formato do email
     if (!validateEmail(email)) {
       return res.status(400).json({
         success: false,
@@ -61,7 +58,6 @@ async function register(req, res) {
       });
     }
 
-    // 3. Validação de complexidade da senha
     if (!validatePassword(password)) {
       return res.status(400).json({
         success: false,
@@ -69,7 +65,6 @@ async function register(req, res) {
       });
     }
 
-    // 4. Validação de unicidade do email
     const exists = await userModel.emailExists(email);
     if (exists) {
       return res.status(409).json({
@@ -78,7 +73,6 @@ async function register(req, res) {
       });
     }
 
-    // 5. Criação do usuário (role padrão 'cliente')
     const result = await userModel.createUser(email, password, 'cliente');
 
     res.status(201).json({
@@ -107,7 +101,6 @@ async function login(req, res) {
   try {
     const { email, password } = req.body;
 
-    // 1. Validação de campos obrigatórios
     if (!email || !password) {
       return res.status(400).json({
         success: false,
@@ -115,7 +108,6 @@ async function login(req, res) {
       });
     }
 
-    // 2. Buscar usuário
     const user = await userModel.findUserByEmail(email);
     
     if (!user) {
@@ -125,7 +117,6 @@ async function login(req, res) {
       });
     }
 
-    // 3. Verificar senha
     const passwordValid = await userModel.verifyPassword(password, user.password);
     
     if (!passwordValid) {
@@ -135,10 +126,8 @@ async function login(req, res) {
       });
     }
 
-    // 4. Atualizar último login
     await userModel.updateLastLogin(user.id);
 
-    // 5. Gerar token JWT
     const token = jwt.sign(
       { 
         id: user.id, 
@@ -149,7 +138,6 @@ async function login(req, res) {
       { expiresIn: JWT_EXPIRES_IN }
     );
 
-    // 6. Retornar sucesso com token
     res.json({
       success: true,
       message: "Login realizado com sucesso!",
@@ -208,8 +196,22 @@ async function remove(req, res) {
   }
 }
 
+/**
+ * Retorna os dados do usuário logado (extraídos do token JWT)
+ * GET /api/auth/me
+ */
+async function getMe(req, res) {
+  const { id, email, role } = req.user;
+
+  res.json({
+    success: true,
+    user: { id, email, role }
+  });
+}
+
 module.exports = {
   register,
   login,
-  remove
+  remove,
+  getMe
 };

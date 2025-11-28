@@ -3,7 +3,7 @@ const vendaModel = require('../models/vendaModel');
 
 async function checkout(req, res){
   try {
-    const venda = req.body; // { itens: [{id,q,preco}], total? }
+    const venda = req.body; 
     if(!venda || !Array.isArray(venda.itens) || venda.itens.length===0) return res.status(400).json({ error: 'Carrinho inválido' });
 
     // valida itens
@@ -15,7 +15,6 @@ async function checkout(req, res){
     res.status(201).json({ success: true, id: result.vendaId });
   } catch(err){
     console.error(err);
-    // se é erro de estoque (mensagem gerada no model) retornamos 400
     if (err.message && err.message.startsWith('Estoque insuficiente')) {
       return res.status(400).json({ error: err.message });
     }

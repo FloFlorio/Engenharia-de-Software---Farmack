@@ -2,6 +2,7 @@
 const express = require("express");
 const router = express.Router();
 const authController = require("../controllers/authController");
+const { authenticateToken } = require("../middleware/authMiddleware");
 
 /**
  * @swagger
@@ -122,6 +123,41 @@ router.post("/register", authController.register);
  *         description: Erro interno do servidor.
  */
 router.post("/login", authController.login);
+
+/**
+ * @swagger
+ * /api/auth/me:
+ *   get:
+ *     summary: Retorna os dados do usuário logado
+ *     tags: [Autenticação]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Dados do usuário logado.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 user:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: integer
+ *                     email:
+ *                       type: string
+ *                     role:
+ *                       type: string
+ *       401:
+ *         description: Não autorizado (Token não fornecido).
+ *       403:
+ *         description: Proibido (Token inválido ou expirado).
+ */
+router.get("/me", authenticateToken, authController.getMe);
 
 /**
  * @swagger

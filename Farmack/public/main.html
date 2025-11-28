@@ -5,39 +5,37 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Farmack — Tela Principal</title>
   <style>
-
     #chart {
-  width: 100%;
-}
+      width: 100%;
+    }
 
-    /* Adicionar na seção <style> */
-      .input-label {
-        font-weight: 600;
-        margin-top: 8px;
-        margin-bottom: 4px;
-        display: block;
-        font-size: 14px;
-      }
+    .input-label {
+      font-weight: 600;
+      margin-top: 8px;
+      margin-bottom: 4px;
+      display: block;
+      font-size: 14px;
+    }
 
-      .input-field {
-        width: 100%;
-        padding: 10px 12px;
-        border: 1px solid var(--border);
-        border-radius: 8px;
-        outline: none;
-        transition: border-color 0.2s;
-      }
+    .input-field {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
 
-      .input-field:focus {
-        border-color: var(--primary);
-        box-shadow: 0 0 0 3px var(--ring);
-      }
+    .input-field:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px var(--ring);
+    }
 
-      /* Ajuste no modal-content para melhor espaçamento */
-      .modal-content {
-        /* ... (manter estilos existentes) ... */
-        gap: 0px; /* Alterar o gap para 0, pois os inputs já têm margin-top */
-      }
+    /* Ajuste no modal-content para melhor espaçamento */
+    .modal-content {
+      /* ... (manter estilos existentes) ... */
+      gap: 0px; /* Alterar o gap para 0, pois os inputs já têm margin-top */
+    }
 
     /* Modal styles kept first so the modal renders correctly */
     .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: flex; justify-content: center; align-items: center; }
@@ -275,7 +273,7 @@
 
   <script>
     // === CONFIG ===
-    const API = 'http://localhost:3000'; // sua API (porta 3000 conforme seu server)
+    const API = 'http://localhost:3000';
     // helpers
     const today = new Date();
     const money = v => Number(v || 0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
@@ -313,7 +311,7 @@
 
     document.getElementById('logoutBtn').addEventListener('click', ()=>{
       alert('Sessão encerrada.');
-      window.location.href = '';
+      window.location.href = '/login.html';
     });
 
     // perfil
@@ -327,7 +325,6 @@
         const res = await fetch(url);
         if(!res.ok) throw new Error('Erro ao buscar produtos: ' + res.status);
         produtos = await res.json();
-        // normalize lotes: if server returns lotes array use it, else map lote/validade
         produtos = produtos.map(p => {
           if(p.lotes && Array.isArray(p.lotes)) return p;
           const lote = p.lote ? { lote: p.lote, validade: p.validade } : undefined;
@@ -375,13 +372,12 @@
           method: 'DELETE',
         });
         
-        if (resp.status === 204) { // 204 No Content é o esperado para DELETE bem-sucedido
+        if (resp.status === 204) { 
           alert('Produto excluído com sucesso!');
-          await fetchProdutos(); // Recarrega a lista de produtos
+          await fetchProdutos(); 
         } else if (resp.status === 404) {
           alert('Erro: Produto não encontrado.');
         } else {
-          // Tenta ler a mensagem de erro do backend, se houver
           const json = await resp.json().catch(() => ({}));
           throw new Error(json.error || 'Erro ao excluir produto');
         }
@@ -507,11 +503,10 @@
     });
 
     // delegations
-    // delegations
 tblProdutosBody.addEventListener('click',(e)=>{
   const addBtn = e.target.closest('[data-add]');
   const deleteBtn = e.target.closest('[data-delete]');
-  const editBtn = e.target.closest('[data-edit]'); // NOVO: Botão de Edição
+  const editBtn = e.target.closest('[data-edit]');
 
   if(addBtn){
     const id = parseInt(addBtn.getAttribute('data-add'),10);
@@ -523,9 +518,9 @@ tblProdutosBody.addEventListener('click',(e)=>{
     if(id){ deleteProduto(id); }
   }
   
-  if(editBtn){ // Lógica de Edição
+  if(editBtn){
     const id = parseInt(editBtn.getAttribute('data-edit'),10);
-    if(id){ openModal(id); } // Chama a nova função openModal com o ID
+    if(id){ openModal(id); }
   }
 });
 
@@ -609,30 +604,28 @@ tblProdutosBody.addEventListener('click',(e)=>{
       preencherAlertas();
     }
 
-    // CHART (kept same)
+    // CHART ()
     function drawChart(){
-  const canvas = document.getElementById('chart');
-  // NOVO: Verifica se o canvas existe e se está visível
-  if (!canvas || canvas.offsetParent === null) return; 
-  
-  const ctx = canvas.getContext('2d');
-  
-  // NOVO: Garante que o canvas tem o tamanho correto antes de desenhar
-  const W_CONTAINER = canvas.parentElement.clientWidth;
-  const W = canvas.width = W_CONTAINER * 0.7;
-  const H = canvas.height = 220; // Altura fixa
-  
-  ctx.clearRect(0,0,W,H); // Limpa a área
+      const canvas = document.getElementById('chart');
+      if (!canvas || canvas.offsetParent === null) return; 
+      
+      const ctx = canvas.getContext('2d');
+      
+      const W_CONTAINER = canvas.parentElement.clientWidth;
+      const W = canvas.width = W_CONTAINER * 0.7;
+      const H = canvas.height = 220;
+      
+      ctx.clearRect(0,0,W,H); 
 
-  const days = [...Array(7)].map((_,i)=> addDays(today, -(6-i)));
-  const totals = days.map(d=>{
-    const start = new Date(d); start.setHours(0,0,0,0);
-    const end = new Date(d); end.setHours(23,59,59,999);
-    return (vendas || []).filter(v=> {
-      const vd = new Date(v.data);
-      return vd >= start && vd <= end;
-    }).reduce((s,v)=> s+Number(v.total || 0), 0);
-  });
+      const days = [...Array(7)].map((_,i)=> addDays(today, -(6-i)));
+      const totals = days.map(d=>{
+        const start = new Date(d); start.setHours(0,0,0,0);
+        const end = new Date(d); end.setHours(23,59,59,999);
+        return (vendas || []).filter(v=> {
+          const vd = new Date(v.data);
+          return vd >= start && vd <= end;
+        }).reduce((s,v)=> s+Number(v.total || 0), 0);
+      });
 
   if (totals.every(t => t === 0)) {
     const padding = 28;
@@ -743,7 +736,7 @@ async function saveProduto() {
     categoria,
     descricao,
     preco,
-    estoque: estoque, // Usamos 'estoque' para corresponder ao seu modelo
+    estoque: estoque,
     lote,
     validade: validade || null
   };
@@ -765,7 +758,7 @@ async function saveProduto() {
 
     alert(`Produto ${produtoEmEdicaoId ? 'atualizado' : 'criado'} com sucesso!`);
     closeModal();
-    await fetchProdutos(); // Recarrega a lista
+    await fetchProdutos(); 
   } catch (err) {
     console.error('Erro ao salvar produto', err);
     alert(`Erro ao ${produtoEmEdicaoId ? 'atualizar' : 'criar'} produto: ` + (err.message || 'Erro desconhecido'));
@@ -777,8 +770,6 @@ btnNovo.addEventListener('click', () => openModal());
 btnFechar.addEventListener('click', closeModal);
 btnSalvar.addEventListener('click', saveProduto);
 
-
-    // helper: switchTo section programmatically
     function switchTo(id){
       sections.forEach(s => s.classList.toggle('active', s.id === id));
       nav.querySelectorAll('button').forEach(b => b.setAttribute('aria-current', b.getAttribute('data-section')===id ? 'page' : 'false'));

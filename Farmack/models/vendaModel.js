@@ -10,7 +10,6 @@ async function createVenda(venda) {
     const vendaId = resVenda.insertId;
 
     for (const item of venda.itens) {
-      // pega preço atual do produto (fallback para item.preco)
       const [rowsProd] = await conn.query('SELECT preco, estoque FROM produtos WHERE id = ?', [item.id]);
       if (!rowsProd || rowsProd.length === 0) throw new Error(`Produto ${item.id} não encontrado`);
       const produtoAtual = rowsProd[0];

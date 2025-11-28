@@ -151,5 +151,5 @@ router.delete('/:id', ctrl.remove);
  *     summary: Busca produtos (use query param q)
  *     tags: [Produtos]
  */
-router.get('/search', ctrl.search); // mantive rota search para compatibilidade; você pode usar ?q=
+router.get('/search', ctrl.search);
 module.exports = router;

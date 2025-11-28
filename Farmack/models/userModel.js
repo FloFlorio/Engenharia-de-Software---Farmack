@@ -3,6 +3,22 @@ const db = require("../db"); // Assume que db/index.js exporta o pool do mysql2/
 const bcrypt = require("bcrypt");
 
 /**
+ * Busca usuário por ID
+ * @param {number} id - ID do usuário
+ * @returns {Promise<Object|null>} - Dados do usuário (sem hash da senha) ou null se não encontrado
+ */
+async function findUserById(id) {
+  const query = `
+    SELECT id, email, role, created_at, last_login
+    FROM usuarios
+    WHERE id = ?
+  `;
+  
+  const [rows] = await db.execute(query, [id]);
+  return rows.length > 0 ? rows[0] : null;
+}
+
+/**
  * Cria um novo usuário no banco de dados
  * @param {string} email - Email do usuário
  * @param {string} password - Senha em texto plano (será hasheada)
@@ -93,6 +109,7 @@ module.exports = {
   emailExists,
   deleteUser,
   findUserByEmail,
+  findUserById,
   verifyPassword,
   updateLastLogin
 };

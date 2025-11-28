@@ -8,10 +8,10 @@
     :root{
       --bg: #f6f7fb;
       --card: #ffffff;
-      --text: #1f2937; /* slate-800 */
-      --muted: #6b7280; /* gray-500 */
-      --primary: #2563eb; /* blue-600 */
-      --primary-pressed: #1d4ed8; /* blue-700 */
+      --text: #1f2937;
+      --muted: #6b7280;
+      --primary: #2563eb; 
+      --primary-pressed: #1d4ed8;
       --ring: rgba(37,99,235,.25);
       --success: #16a34a;
       --danger: #dc2626;
@@ -133,12 +133,11 @@
     const f = document.getElementById('loginForm');
     const alertEl = document.getElementById('alert');
     const submitBtn = document.getElementById('submitBtn');
-    const emailEl = document.getElementById('email'); // Alterado de username para email
+    const emailEl = document.getElementById('email'); 
     const passEl = document.getElementById('password');
     const toggleEye = document.getElementById('toggleEye');
     const rememberEl = document.getElementById('remember');
 
-    // Carregar email salvo se "lembrar de mim" estava ativado
     const savedEmail = localStorage.getItem('farmack_email');
     if (savedEmail) {
       emailEl.value = savedEmail;
@@ -170,7 +169,7 @@
       e.preventDefault();
       alertEl.className = 'alert';
 
-      const email = emailEl.value.trim(); // Alterado de username para email
+      const email = emailEl.value.trim(); 
       const password = passEl.value;
       const remember = rememberEl.checked;
 
@@ -178,7 +177,7 @@
       passEl.setAttribute('aria-invalid', password ? 'false' : 'true');
 
       if(!email || !password){
-        showError('Preencha e-mail e senha.'); // Alterado de usuário para e-mail
+        showError('Preencha e-mail e senha.');
         return;
       }
 
@@ -188,20 +187,19 @@
         const res = await fetch('/api/auth/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password }) // Enviando email e password
+          body: JSON.stringify({ email, password }) 
         });
 
         const data = await res.json();
 
         if (data.success) {
-          // Salvar token JWT
+          
           localStorage.setItem('farmack_token', data.token);
           
-          // Salvar email se "lembrar de mim" estiver marcado
           if (remember) {
-            localStorage.setItem('farmack_email', email); // Alterado de username para email
+            localStorage.setItem('farmack_email', email);
           } else {
-            localStorage.removeItem('farmack_email'); // Alterado de username para email
+            localStorage.removeItem('farmack_email');
           }
 
           showSuccess('Login realizado com sucesso! Redirecionando…');
@@ -210,7 +208,7 @@
             window.location.href = '/main.html';
           }, 800);
         } else {
-          showError(data.message || 'Credenciais inválidas. Verifique e-mail e senha.'); // Alterado de usuário para e-mail
+          showError(data.message || 'Credenciais inválidas. Verifique e-mail e senha.');
           setBusy(false);
         }
       } catch(err){
