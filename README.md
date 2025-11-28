@@ -15,8 +15,8 @@ git clone https://github.com/FernandoMathias/Engenharia-de-Software---Farmack.gi
 cd Engenharia-de-Software---Farmack
 node server.js
 
-# abra no navegador para acessar a tela de login
+- abra no navegador para acessar a tela de login
 http://localhost:3000/
 
-# Baixe o arquivo schema.sql
+- Baixe o arquivo schema.sql
 mysql -u root -p < schema.sql
